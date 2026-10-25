@@ -3,12 +3,13 @@
 [Türkçe](README_tr.md)
 
 A VS Code extension for Appium 3: start and stop the Appium server, see the installed drivers and every Android and iOS
-device in one place, and (coming next) inspect native app screens with ready-to-paste Appium java-client locators.
+device in one place, and inspect native app screens with ready-to-paste Appium java-client locators.
 
-> **Status: 0.1.0, in development.** The server, driver and device parts work. The inspector panel (session, screenshot,
-> UI tree, locators, java-client output) is the next phase; see [PLAN.md](PLAN.md).
+> **Status: 0.1.0, first test release.** Everything below is built and covered by tests against fake Appium servers and
+> a real Appium 3.8.0 server start/stop; sessions on real emulators, simulators and devices still need a first run on a
+> machine that has them. See [PLAN.md](PLAN.md).
 
-## What works today
+## Features
 
 - **Appium server:** Start and Stop from the sidebar. The server listens on `127.0.0.1:4723` by default; its output goes
   to the *TestFly Appium* output channel. A server that already runs on the address (started in a terminal, for example)
@@ -18,6 +19,36 @@ device in one place, and (coming next) inspect native app screens with ready-to-
 - **Devices:** Android emulators and devices (adb), iOS simulators (`xcrun simctl`) and real iOS devices
   (`xcrun devicectl`, with `xctrace` as fallback). Devices that cannot be used show why (unauthorized, offline, not
   paired). Shut down simulators can be booted from the list.
+- **Appium Inspector panel** (*Open Appium Inspector*, or *Inspect* next to a device):
+  - **Session:** pick a device and an app: an installed app (`appPackage`/`appActivity` or `bundleId`), an app file
+    (`.apk`, `.app`, `.ipa`), or the current screen without an app. A live preview shows the capabilities; advanced JSON
+    capabilities and saved profiles are supported. The app is not reinstalled or reset (`noReset`) and keeps running when
+    the session ends (`shouldTerminateApp: false`).
+  - **Screen and tree:** screenshot with element outlines, UI tree, Page Source tab with the raw XML, element attributes.
+  - **Actions:** tap, long press, type, swipe, back (Android) and home, through W3C actions with `mobile:` fallbacks.
+  - **Locators:** id, accessibility id, UiAutomator, iOS predicate, iOS class chain, class name and XPath, with exact
+    match counts on the current screen and a **Verify** button that asks the device (`findElements`).
+  - **Finder:** search by any strategy, as in Appium Inspector; strategies only the device can evaluate are sent to it.
+  - **Java:** `@AndroidFindBy` / `@iOSXCUITFindBy` page factory fields or `AppiumBy` constants, and **Record** mode, which
+    writes a page class from your taps, typing, swipes, back and home.
+
+## Java output
+
+| `codegen.javaClient` | java-client | Selenium | PageFactory import |
+|---|---|---|---|
+| `11` (default) | 11.x | 4.50+ (only `selenium-api` is needed) | `io.appium.java_client.support.PageFactory` |
+| `9-10` | 9.x, 10.x | 4.x | `org.openqa.selenium.support.PageFactory` |
+
+The generated classes were compiled with `javac` against java-client 11.0.0 and 10.1.1 with Selenium 4.51.0.
+
+## Install
+
+```bash
+code --install-extension testfly-appium-inspector-0.1.0.vsix
+```
+
+Or in VS Code: Extensions view > `...` > *Install from VSIX...*. Then open the **TestFly Appium** view in the activity
+bar, press **Start Appium**, and **Inspect** a device.
 
 ## Requirements
 
@@ -58,13 +89,17 @@ signature lasts 7 days.
 | `testflyAppiumInspector.appium.autoStart` | `false` | Start the server when the view opens |
 | `testflyAppiumInspector.adbPath` | (empty) | adb; empty: `ANDROID_HOME`, `ANDROID_SDK_ROOT` or PATH |
 | `testflyAppiumInspector.ios.*` | | Real iOS device signing, see above |
+| `testflyAppiumInspector.autoRefreshAfterAction` | `true` | Read the screen again after an action |
+| `testflyAppiumInspector.codegen.javaClient` | `11` | `11` or `9-10`, see Java output |
+| `testflyAppiumInspector.codegen.style` | `pageFactory` | `pageFactory` or `appiumBy` |
 
 VS Code started from the Dock does not see the PATH of your shell profile; the extension reads it from a login shell
 once. If Appium or adb is still not found, set its path above.
 
 ## Commands
 
-*TestFly Appium: Start Appium Server*, *Stop Appium Server*, *Show Appium Server Log*, *Reload Devices*.
+*TestFly Appium: Open Appium Inspector*, *Start Appium Server*, *Stop Appium Server*, *Show Appium Server Log*,
+*Reload Devices*.
 
 ## Development
 
@@ -72,7 +107,8 @@ once. If Appium or adb is still not found, set its path above.
 npm install
 npm test                 # builds and runs the unit tests
 npm run package          # builds the .vsix
-node test/preview.js     # renders the sidebar to out/preview/*.png (needs Playwright)
+node test/preview.js             # renders the sidebar to out/preview/*.png (needs Playwright)
+node test/preview-inspector.js   # drives the inspector webview with a fake host and checks it
 TESTFLY_REAL_APPIUM=$(which appium) npm test   # also starts and stops a real Appium 3
 ```
 

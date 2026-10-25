@@ -1,6 +1,6 @@
 # TestFly - Appium Inspector: Plan
 
-Durum: **Faz 0 ve Faz 1 tamam; sıradaki Faz 2** (25 Ekim 2026). İlerleme: Bölüm 16'daki faz başlıkları. Bu belge, Appium'a özgü yeni bir VS Code uzantısı olan
+Durum: **Faz 0-4 kodlandı; cihazda ilk deneme bekleniyor** (25 Ekim 2026). İlerleme: Bölüm 16'daki faz başlıkları. Bu belge, Appium'a özgü yeni bir VS Code uzantısı olan
 "TestFly - Appium Inspector"ın tek kaynağıdır. Uzantı bu depoda sıfırdan yazılır; görünüm ve etkileşim tasarımı ayrı bir proje
 olan "TestFly Inspector" (mobilecli tabanlı) uzantısından alınır (Bölüm 4 ve 13). Kod, sınıf, metot ve ayar adları İngilizce
 kalır.
@@ -643,7 +643,7 @@ bir commit ile `AppiumInspectorExtensions` deposuna gider.
   edildi; gerçek `adb`/`simctl`/`devicectl` çıktıları ve page source fixture'ları kullanıcının makinesinde toplanacak
   (Faz 0'ın bu maddesi açık). macOS ve Windows'ta henüz çalıştırılmadı.
 
-### Faz 2: Sunucu, oturum ve extension host
+### Faz 2: Sunucu, oturum ve extension host (kodlandı)
 
 - `appium/server.ts`, `session.ts`, `gestures.ts`, `extension.ts` yeniden yazımı, webview ile host arasındaki mesaj
   protokolü.
@@ -652,13 +652,13 @@ bir commit ile `AppiumInspectorExtensions` deposuna gider.
   gelir. Tap, swipe, type, back ve home çalışır. Uygulamasız oturum açılır. Windows makinesinde `.vsix` kurulur; Appium başlatılır,
   durdurulur (süreç ağacı kalmaz) ve Android oturumu açılır.
 
-### Faz 3: Mobil webview
+### Faz 3: Mobil webview (kodlandı)
 
 - `body.html`, `inspector.js/css`, oturum paneli, Page Source sekmesi, `ref` temizliği, `DOMParser` tabanlı ağaç, finder.
 - **Kabul:** Bir elemente tıklayınca doğru düğüm ve öznitelikler görünür. Overlay her iki platformda elementle örtüşür.
   Playwright önizleme testi (sahte host) yeşil.
 
-### Faz 4: Mobil locator'lar, Java çıktısı ve Record
+### Faz 4: Mobil locator'lar, Java çıktısı ve Record (kodlandı)
 
 - `media/locators.js`, `media/codegen.js`, Verify, alan adı üretimi, Record sınıfı.
 - **Kabul:**

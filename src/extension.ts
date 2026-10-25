@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { AppiumController, SECTION } from './controller';
+import { InspectorPanel } from './inspectorPanel';
 import { SidebarProvider } from './sidebar';
 
 let controller: AppiumController | undefined;
@@ -15,10 +16,12 @@ export function activate(context: vscode.ExtensionContext) {
     command('stopServer', c => c.stop());
     command('showServerLog', c => c.output.show(true));
     command('refreshDevices', c => c.refreshDevices());
+    command('open', c => InspectorPanel.show(context, c));
 }
 
 /** Stops the Appium server this extension started; a server started elsewhere keeps running. */
 export function deactivate() {
+    InspectorPanel.disposeCurrent();
     controller?.dispose();
     controller = undefined;
 }

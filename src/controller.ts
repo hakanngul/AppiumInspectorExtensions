@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { AppiumServer, InstalledDriver, ServerInfo, ServerOptions } from './appium/server';
+import { InspectorSession } from './appium/session';
 import { DeviceInfo, listDevices } from './devices';
 import { bootSimulator } from './devices/simctl';
 
@@ -153,6 +154,11 @@ export class AppiumController implements vscode.Disposable {
         } finally {
             this.update({ devicesLoading: false });
         }
+    }
+
+    /** A new Appium session on the server this controller manages. */
+    newSession(device: DeviceInfo, capabilities: Record<string, unknown>): Promise<InspectorSession> {
+        return InspectorSession.open(this.server.client, device, capabilities);
     }
 
     async boot(udid: string) {

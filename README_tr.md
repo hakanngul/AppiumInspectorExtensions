@@ -3,12 +3,13 @@
 [English](README.md)
 
 Appium 3 için bir VS Code uzantısı: Appium sunucusunu başlatın ve durdurun, yüklü sürücüleri ve bütün Android ve iOS
-cihazları tek yerde görün ve (sıradaki adım) native uygulama ekranlarını, hazır Appium java-client locator'larıyla inceleyin.
+cihazları tek yerde görün ve native uygulama ekranlarını, hazır Appium java-client locator'larıyla inceleyin.
 
-> **Durum: 0.1.0, geliştiriliyor.** Sunucu, sürücü ve cihaz bölümleri çalışıyor. İnceleme paneli (oturum, ekran görüntüsü,
-> UI ağacı, locator'lar, java-client çıktısı) sıradaki faz; bkz. [PLAN.md](PLAN.md).
+> **Durum: 0.1.0, ilk deneme sürümü.** Aşağıdakilerin hepsi yazıldı; sahte Appium sunucularıyla ve gerçek Appium 3.8.0
+> başlat/durdur ile test edildi. Gerçek emülatör, simülatör ve cihazlarda oturum henüz bunlara sahip bir makinede
+> denenmedi. Bkz. [PLAN.md](PLAN.md).
 
-## Şu an çalışanlar
+## Özellikler
 
 - **Appium sunucusu:** Kenar çubuğundan Start ve Stop. Sunucu varsayılan olarak `127.0.0.1:4723` adresinde dinler; çıktısı
   *TestFly Appium* çıktı kanalına yazılır. Adreste zaten çalışan bir sunucu (örneğin terminalden başlatılmış) olduğu gibi
@@ -18,6 +19,36 @@ cihazları tek yerde görün ve (sıradaki adım) native uygulama ekranlarını,
 - **Cihazlar:** Android emülatör ve cihazlar (adb), iOS simülatörleri (`xcrun simctl`) ve gerçek iOS cihazlar
   (`xcrun devicectl`, yedek olarak `xctrace`). Kullanılamayan cihazlar nedenini gösterir (yetki yok, çevrimdışı, eşleşmemiş).
   Kapalı simülatörler listeden başlatılabilir (Boot).
+- **Appium Inspector paneli** (*Open Appium Inspector* ya da cihazın yanındaki *Inspect*):
+  - **Oturum:** Cihaz ve uygulama seçin: yüklü uygulama (`appPackage`/`appActivity` ya da `bundleId`), uygulama dosyası
+    (`.apk`, `.app`, `.ipa`) ya da uygulamasız, o anki ekran. Capabilities canlı önizlenir; gelişmiş JSON capabilities ve
+    kayıtlı profiller desteklenir. Uygulama yeniden kurulmaz ve sıfırlanmaz (`noReset`), oturum bitince açık kalır
+    (`shouldTerminateApp: false`).
+  - **Ekran ve ağaç:** Element çerçeveli ekran görüntüsü, UI ağacı, ham XML'li Page Source sekmesi, element öznitelikleri.
+  - **Eylemler:** Tap, long press, yazı, swipe, back (Android) ve home; W3C actions ile, yedek olarak `mobile:` komutları.
+  - **Locator'lar:** id, accessibility id, UiAutomator, iOS predicate, iOS class chain, class name ve XPath; o anki ekranda
+    kesin eşleşme sayısı ve cihaza soran **Verify** düğmesi (`findElements`).
+  - **Bulucu:** Appium Inspector'daki gibi her stratejiyle arama; yalnızca cihazın çözebildiği stratejiler cihaza gönderilir.
+  - **Java:** `@AndroidFindBy` / `@iOSXCUITFindBy` page factory alanları ya da `AppiumBy` sabitleri ve dokunma, yazı,
+    swipe, back ve home adımlarından page sınıfı yazan **Record** kipi.
+
+## Java çıktısı
+
+| `codegen.javaClient` | java-client | Selenium | PageFactory import'u |
+|---|---|---|---|
+| `11` (varsayılan) | 11.x | 4.50+ (yalnızca `selenium-api` gerekir) | `io.appium.java_client.support.PageFactory` |
+| `9-10` | 9.x, 10.x | 4.x | `org.openqa.selenium.support.PageFactory` |
+
+Üretilen sınıflar `javac` ile java-client 11.0.0 ve 10.1.1, Selenium 4.51.0'a karşı derlendi.
+
+## Kurulum
+
+```bash
+code --install-extension testfly-appium-inspector-0.1.0.vsix
+```
+
+Ya da VS Code'da: Extensions görünümü > `...` > *Install from VSIX...*. Sonra etkinlik çubuğundan **TestFly Appium**
+görünümünü açın, **Start Appium**'a basın ve bir cihazın yanındaki **Inspect** ile incelemeye başlayın.
 
 ## Gereksinimler
 
@@ -58,13 +89,17 @@ geçerlidir.
 | `testflyAppiumInspector.appium.autoStart` | `false` | Görünüm açılınca sunucuyu başlat |
 | `testflyAppiumInspector.adbPath` | (boş) | adb; boşsa `ANDROID_HOME`, `ANDROID_SDK_ROOT` ya da PATH |
 | `testflyAppiumInspector.ios.*` | | Gerçek iOS cihaz imzalama, yukarıya bakın |
+| `testflyAppiumInspector.autoRefreshAfterAction` | `true` | Bir eylemden sonra ekranı yeniden oku |
+| `testflyAppiumInspector.codegen.javaClient` | `11` | `11` ya da `9-10`, bkz. Java çıktısı |
+| `testflyAppiumInspector.codegen.style` | `pageFactory` | `pageFactory` ya da `appiumBy` |
 
 Dock'tan açılan VS Code, kabuk profilinizdeki PATH'i görmez; uzantı bunu bir kez giriş kabuğundan okur. Appium ya da adb
 yine bulunamazsa yolunu yukarıdaki ayarlardan verin.
 
 ## Komutlar
 
-*TestFly Appium: Start Appium Server*, *Stop Appium Server*, *Show Appium Server Log*, *Reload Devices*.
+*TestFly Appium: Open Appium Inspector*, *Start Appium Server*, *Stop Appium Server*, *Show Appium Server Log*,
+*Reload Devices*.
 
 ## Geliştirme
 
@@ -72,7 +107,8 @@ yine bulunamazsa yolunu yukarıdaki ayarlardan verin.
 npm install
 npm test                 # derler ve birim testlerini çalıştırır
 npm run package          # .vsix üretir
-node test/preview.js     # kenar çubuğunu out/preview/*.png olarak çizer (Playwright gerekir)
+node test/preview.js             # kenar çubuğunu out/preview/*.png olarak çizer (Playwright gerekir)
+node test/preview-inspector.js   # inceleme webview'ını sahte bir host ile sürer ve kontrol eder
 TESTFLY_REAL_APPIUM=$(which appium) npm test   # ayrıca gerçek bir Appium 3'ü başlatıp durdurur
 ```
 

@@ -2,12 +2,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { AppiumController, ControllerState, SECTION } from './controller';
+import { InspectorPanel } from './inspectorPanel';
 import { webviewHtml } from './webview';
 
 /** Messages the sidebar sends; see media/sidebar.js. */
 type Inbound =
     | { type: 'ready' | 'start' | 'stop' | 'log' | 'settings' | 'reloadDevices' | 'reloadDrivers' }
     | { type: 'boot'; id: string }
+    | { type: 'inspect'; id?: string }
     | { type: 'copy'; text: string; label: string };
 
 const STATUS_POLL_MS = 5_000;
@@ -78,6 +80,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 return this.controller.refreshAppium();
             case 'boot':
                 return this.controller.boot(m.id);
+            case 'inspect':
+                return InspectorPanel.show(this.context, this.controller, m.id);
             case 'copy':
                 await vscode.env.clipboard.writeText(m.text);
                 vscode.window.setStatusBarMessage(`$(check) Copied ${m.label}`, 2500);

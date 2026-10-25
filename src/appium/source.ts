@@ -4,7 +4,7 @@
  */
 export function sanitizeXml(xml: string): string {
     return xml
-        .replace(/[^\x09\x0A\x0D\x20-퟿-�\u{10000}-\u{10FFFF}]/gu, '')
+        .replace(/[^\x09\x0A\x0D\x20-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]/gu, '')
         .replace(/&#(x[0-9a-fA-F]+|[0-9]+);/g, (ref, code: string) => (allowedCodePoint(code.startsWith('x') ? parseInt(code.slice(1), 16) : parseInt(code, 10)) ? ref : ''));
 }
 

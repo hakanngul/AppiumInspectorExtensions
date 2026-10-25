@@ -158,7 +158,10 @@
         text.append(el('span', 'name', d.name), el('span', 'sub', [d.version ? `${os} ${d.version}` : os, kind, d.id].join(' · ')));
         row.append(text);
         if (d.state === 'ready') {
-            row.append(chip('Ready', 'ok'));
+            const inspect = el('button', '', 'Inspect');
+            inspect.title = 'Open the Appium Inspector with this device';
+            inspect.addEventListener('click', () => vscode.postMessage({ type: 'inspect', id: d.id }));
+            row.append(chip('Ready', 'ok'), inspect);
         } else if (d.state === 'booting') {
             row.append(chip('Booting', 'info'));
         } else if (d.state === 'shutdown') {
@@ -180,6 +183,7 @@
     $('showLog').addEventListener('click', () => vscode.postMessage({ type: 'log' }));
     $('reloadDevices').addEventListener('click', () => vscode.postMessage({ type: 'reloadDevices' }));
     $('reloadDrivers').addEventListener('click', () => vscode.postMessage({ type: 'reloadDrivers' }));
+    $('openInspector').addEventListener('click', () => vscode.postMessage({ type: 'inspect' }));
     document.addEventListener('click', e => {
         if (e.target.closest('[data-settings]')) vscode.postMessage({ type: 'settings' });
     });
