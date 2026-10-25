@@ -96,10 +96,20 @@ export function capabilityProblems(input: CapabilityInput): string[] {
             problems.push(`"${app.appPackage}" is not a valid Android package name.`);
         }
     }
-    if (device.platform === 'ios' && device.kind === 'real' && !input.signing?.xcodeOrgId?.trim()) {
-        problems.push('A real iOS device needs your Team ID in testflyAppiumInspector.ios.xcodeOrgId to sign WebDriverAgent.');
-    }
     return problems;
+}
+
+/** Things that may make the session fail, but need not: shown, never blocking. */
+export function capabilityWarnings(input: CapabilityInput): string[] {
+    const { device } = input;
+    const extra = input.extra ?? {};
+    const signedElsewhere = ['appium:usePreinstalledWDA', 'usePreinstalledWDA', 'appium:prebuiltWDAPath', 'prebuiltWDAPath', 'appium:xcodeOrgId', 'xcodeOrgId']
+        .some(k => extra[k] !== undefined && extra[k] !== false);
+    if (device.platform === 'ios' && device.kind === 'real' && !input.signing?.xcodeOrgId?.trim() && !signedElsewhere) {
+        return ['No Team ID set (testflyAppiumInspector.ios.xcodeOrgId). Appium needs it to sign and install WebDriverAgent on '
+            + 'the device, unless WebDriverAgent is already installed and signed there.'];
+    }
+    return [];
 }
 
 /** Parses the advanced JSON editor: an object, or an error message. */

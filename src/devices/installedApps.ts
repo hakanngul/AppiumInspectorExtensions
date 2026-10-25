@@ -18,7 +18,7 @@ export function parseAndroidPackages(stdout: string): InstalledApp[] {
     for (const m of stdout.matchAll(/^package:(\S+)\s*$/gm)) {
         ids.add(m[1]);
     }
-    return [...ids].sort().map(id => ({ id }));
+    return [...ids].sort((a, b) => a.localeCompare(b)).map(id => ({ id }));
 }
 
 /**

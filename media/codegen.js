@@ -103,7 +103,7 @@
             list.add(o.javaClient === '9-10' ? 'org.openqa.selenium.support.PageFactory' : 'io.appium.java_client.support.PageFactory');
         }
         if (uses.map) list.add('java.util.Map');
-        return [...list].sort().map(i => 'import ' + i + ';').join('\n');
+        return [...list].sort((a, b) => a.localeCompare(b)).map(i => 'import ' + i + ';').join('\n');
     }
 
     function mapOf(args) {

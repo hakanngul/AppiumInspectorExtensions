@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { AppiumError } from './appium/client';
-import { AppInput, buildCapabilities, capabilityProblems, CapabilityInput, parseExtraCapabilities } from './appium/capabilities';
+import { AppInput, buildCapabilities, capabilityProblems, CapabilityInput, capabilityWarnings, parseExtraCapabilities } from './appium/capabilities';
 import { Direction } from './appium/gestures';
 import { InspectorSession, Locator } from './appium/session';
 import { checkAppFile } from './apps';
@@ -231,7 +231,7 @@ export class InspectorPanel {
             },
         };
         const problems = capabilityProblems(input);
-        const warnings: string[] = [];
+        const warnings = capabilityWarnings(input);
         if (extra.error) {
             problems.push(extra.error);
         }
