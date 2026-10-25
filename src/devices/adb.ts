@@ -109,6 +109,18 @@ export async function resetUiAutomation(adbSetting: string, serial: string): Pro
     }
 }
 
+/**
+ * Removes the UiAutomator2 server apps (and frees UiAutomation) so Appium installs fresh copies on the next session; a
+ * broken or half-updated server install also ends in "UiAutomation not connected". The user's apps are not touched.
+ */
+export async function reinstallUiAutomator2(adbSetting: string, serial: string): Promise<void> {
+    await resetUiAutomation(adbSetting, serial);
+    const adb = await resolveAdb(adbSetting);
+    for (const pkg of ['io.appium.uiautomator2.server.test', 'io.appium.uiautomator2.server']) {
+        await run(adb, ['-s', serial, 'uninstall', pkg], 30_000).catch(() => undefined);
+    }
+}
+
 /** adbCommand with the environment the extension runs tools in (login shell ANDROID_HOME included). */
 export async function resolveAdb(setting: string): Promise<string> {
     return adbCommand(setting, await toolEnv());

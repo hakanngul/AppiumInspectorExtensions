@@ -249,17 +249,6 @@ export class AppiumController implements vscode.Disposable {
         }
     }
 
-    /** Devices Appium has set up in this window (Appium Settings app, permissions); later sessions skip that step. */
-    private readonly initialized = new Set<string>();
-
-    isInitialized(deviceId: string): boolean {
-        return this.initialized.has(deviceId);
-    }
-
-    markInitialized(deviceId: string) {
-        this.initialized.add(deviceId);
-    }
-
     /** A new Appium session on the server this controller manages. */
     newSession(device: DeviceInfo, capabilities: Record<string, unknown>): Promise<InspectorSession> {
         return InspectorSession.open(this.server.client, device, capabilities);

@@ -49,9 +49,9 @@ const { AppiumController } = require('../out/controller.js');
 
 // ── a fake Appium with one session ──────────────────────────────────────
 const SOURCE = fs.readFileSync(path.join(__dirname, 'fixtures', 'android-source.xml'), 'utf8');
-function fakeAppium({ uiAutomationBusyOnce = false } = {}) {
+function fakeAppium({ uiAutomationBusy = 0 } = {}) {
     const calls = [];
-    let busy = uiAutomationBusyOnce;
+    let busy = uiAutomationBusy;
     const server = http.createServer((req, res) => {
         let body = '';
         req.on('data', c => (body += c));
@@ -61,8 +61,8 @@ function fakeAppium({ uiAutomationBusyOnce = false } = {}) {
             const send = (status, value) => { res.statusCode = status; res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ value })); };
             const u = req.url.replace(/^\/session\/abc/, '');
             if (req.url === '/status') return send(200, { ready: true, message: 'ready', build: { version: '3.8.0' } });
-            if (req.method === 'POST' && req.url === '/session' && busy) {
-                busy = false;
+            if (req.method === 'POST' && req.url === '/session' && busy > 0) {
+                busy--;
                 return send(500, { error: 'session not created', message: 'A new session could not be created. Details: java.lang.IllegalStateException: UiAutomation not connected, UiAutomation@99b2847[id=-1, displayId=0, flags=0]' });
             }
             if (req.method === 'POST' && req.url === '/session') return send(200, { sessionId: 'abc', capabilities: json.capabilities.alwaysMatch });
@@ -154,8 +154,7 @@ test('form, session, screen, tap, verify and end through the panel', async () =>
         assert.strictEqual(created['appium:udid'], 'emulator-5554');
         assert.strictEqual(created['appium:noReset'], true);
         assert.deepStrictEqual(created['appium:settings'], { waitForIdleTimeout: 300 }, 'fast start is on by default');
-        assert.ok(!('appium:skipDeviceInitialization' in created), 'first session on the device sets it up');
-        assert.ok(controller.isInitialized('emulator-5554'), 'later sessions skip the setup');
+        assert.ok(!('appium:skipDeviceInitialization' in created) && !('appium:disableWindowAnimation' in created), 'fast start leaves the device alone');
         const screen = posted.find(m => m.type === 'screen');
         assert.strictEqual(screen.source, SOURCE);
         assert.ok(posted.findIndex(m => m.type === 'shot') < posted.findIndex(m => m.type === 'screen'), 'the picture comes first');
@@ -188,7 +187,7 @@ test('sameActivity: short, full and component names of one activity', () => {
 
 test('Android: "UiAutomation not connected" frees UiAutomation on the device and starts the session again', async () => {
     const os = require('node:os');
-    const { server, calls, port } = await fakeAppium({ uiAutomationBusyOnce: true });
+    const { server, calls, port } = await fakeAppium({ uiAutomationBusy: 1 });
     const adbLog = path.join(os.tmpdir(), `fake-adb-${port}.log`);
     process.env.FAKE_ADB_LOG = adbLog;
     config = { 'appium.port': port, autoRefreshAfterAction: false, adbPath: path.join(__dirname, 'fixtures', 'fake-adb.js') };
@@ -206,6 +205,37 @@ test('Android: "UiAutomation not connected" frees UiAutomation on the device and
         const adb = fs.readFileSync(adbLog, 'utf8');
         assert.match(adb, /am force-stop io\.appium\.uiautomator2\.server\.test/);
         assert.match(adb, /pkill -f uiautomator/);
+        assert.doesNotMatch(adb, /uninstall/, 'the first step is enough here');
+        assert.ok(!posted.some(m => m.type === 'error'), JSON.stringify(posted.filter(m => m.type === 'error')));
+    } finally {
+        delete process.env.FAKE_ADB_LOG;
+        fs.rmSync(adbLog, { force: true });
+        controller.dispose();
+        server.close();
+    }
+});
+
+test('Android: still not connected after freeing it, the UiAutomator2 server apps are reinstalled', async () => {
+    const os = require('node:os');
+    const { server, calls, port } = await fakeAppium({ uiAutomationBusy: 2 });
+    const adbLog = path.join(os.tmpdir(), `fake-adb-${port}-2.log`);
+    process.env.FAKE_ADB_LOG = adbLog;
+    config = { 'appium.port': port, autoRefreshAfterAction: false, adbPath: path.join(__dirname, 'fixtures', 'fake-adb.js') };
+    posted.length = 0;
+    InspectorPanel.disposeCurrent();
+    const controller = new AppiumController();
+    const context = { extensionUri: { fsPath: path.join(__dirname, '..') }, extensionPath: path.join(__dirname, '..'), globalState: { get: (_k, d) => d, update: () => Promise.resolve() } };
+    try {
+        await controller.checkServer();
+        controller.update({ devices: [{ id: 'emulator-5554', name: 'Pixel 10', platform: 'android', kind: 'emulator', version: '17', state: 'ready' }] });
+        InspectorPanel.show(context, controller);
+        await receive({ type: 'startSession', form: { deviceId: 'emulator-5554', app: { kind: 'none' }, extra: '' } });
+        await until(m => m.type === 'screen');
+        assert.strictEqual(calls.filter(c => c.method === 'POST' && c.url === '/session').length, 3, 'two retries');
+        const adb = fs.readFileSync(adbLog, 'utf8');
+        assert.match(adb, /uninstall io\.appium\.uiautomator2\.server\.test/);
+        assert.match(adb, /uninstall io\.appium\.uiautomator2\.server\n/);
+        assert.doesNotMatch(adb, /uninstall (?!io\.appium\.uiautomator2)/, 'the user\'s apps are left alone');
         assert.ok(!posted.some(m => m.type === 'error'), JSON.stringify(posted.filter(m => m.type === 'error')));
     } finally {
         delete process.env.FAKE_ADB_LOG;

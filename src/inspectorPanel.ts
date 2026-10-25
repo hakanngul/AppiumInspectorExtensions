@@ -8,7 +8,7 @@ import { InspectorSession, Locator } from './appium/session';
 import { checkAppFile } from './apps';
 import { firstFreePort, isPortFree } from './ports';
 import { AppiumController, ControllerState, SECTION } from './controller';
-import { resetUiAutomation } from './devices/adb';
+import { reinstallUiAutomator2, resetUiAutomation } from './devices/adb';
 import { InstalledApp, launchActivity, listInstalledApps } from './devices/installedApps';
 import { DeviceInfo } from './devices/types';
 import { webviewHtml } from './webview';
@@ -273,7 +273,7 @@ export class InspectorPanel {
             device,
             app,
             extra: extraCaps,
-            fast: cfg.get('session.fastStart', true) ? { deviceInitialized: this.controller.isInitialized(device.id) } : undefined,
+            fast: cfg.get('session.fastStart', true),
             signing: {
                 xcodeOrgId: cfg.get('ios.xcodeOrgId', ''),
                 xcodeSigningId: cfg.get('ios.xcodeSigningId', 'Apple Development'),
@@ -332,21 +332,29 @@ export class InspectorPanel {
                 { location: vscode.ProgressLocation.Notification, title: `Appium: starting a session on ${device.name}…`, cancellable: false },
                 () => this.controller.newSession(device, prepared.capabilities!));
             const created = Date.now();
-            try {
-                this.session = await open();
-            } catch (e) {
-                // Another UiAutomation client (an earlier UiAutomator2 server, another inspector) still holds the
-                // connection: free it on the device and try once more.
-                if (device.platform !== 'android' || !/UiAutomation not connected/i.test((e as Error).message)) {
-                    throw e;
+            // "UiAutomation not connected": another UiAutomation client (an earlier UiAutomator2 server, another
+            // inspector) still holds the connection, or the UiAutomator2 server apps on the device are broken. First free
+            // the connection, then remove the server apps so Appium installs them again; each step tries once more.
+            const adbPath = vscode.workspace.getConfiguration(SECTION).get('adbPath', '');
+            const recoveries = device.platform === 'android' ? [
+                { status: 'UiAutomation was busy; freeing it and starting the session again…', log: `Freeing UiAutomation on ${device.name} and trying again…`, run: () => resetUiAutomation(adbPath, device.id) },
+                { status: 'UiAutomation is still not connected; reinstalling the UiAutomator2 server and trying again…', log: `Removing the UiAutomator2 server apps from ${device.name} so Appium installs them again…`, run: () => reinstallUiAutomator2(adbPath, device.id) },
+            ] : [];
+            for (let attempt = 0; ; attempt++) {
+                try {
+                    this.session = await open();
+                    break;
+                } catch (e) {
+                    const recovery = recoveries[attempt];
+                    if (!recovery || !/UiAutomation not connected/i.test((e as Error).message)) {
+                        throw e;
+                    }
+                    this.controller.output.appendLine(`${(e as Error).message}\n${recovery.log}`);
+                    this.status('loading', recovery.status);
+                    await recovery.run();
                 }
-                this.controller.output.appendLine(`${(e as Error).message}\nFreeing UiAutomation on ${device.name} and trying again…`);
-                this.status('loading', 'UiAutomation was busy; freeing it and starting the session again…');
-                await resetUiAutomation(vscode.workspace.getConfiguration(SECTION).get('adbPath', ''), device.id);
-                this.session = await open();
             }
             this.controller.output.appendLine(`Session ${this.session.id} started in ${seconds(Date.now() - created)}`);
-            this.controller.markInitialized(device.id);
             this.post({ type: 'session', device, capabilities: this.session.capabilities });
         } finally {
             this.busy = false;
@@ -455,8 +463,8 @@ export class InspectorPanel {
             this.offerRestart('Appium took the simulator for a real device: the server still runs with an old setting.');
         }
         if (/UiAutomation not connected/i.test(message)) {
-            message += ' Another UiAutomation client still holds the emulator (an earlier UiAutomator2 server, or another inspector such as one based on mobilecli). '
-                + 'Close the other tool, or restart Appium, then start the session again.';
+            message += ' Freeing UiAutomation and reinstalling the UiAutomator2 server did not help. Close any other tool that uses UiAutomation '
+                + '(another inspector, uiautomatorviewer, a mobilecli server), or cold boot the emulator (Device Manager > Cold Boot Now), then start the session again.';
             this.offerRestart('UiAutomation is held by another client on the device.');
         }
         if (e instanceof AppiumError && e.stacktrace) {

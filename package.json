@@ -2,7 +2,7 @@
   "name": "testfly-appium-inspector",
   "displayName": "TestFly - Appium Inspector",
   "description": "Start and stop an Appium 3 server, list Android and iOS devices, and inspect native app screens with ready-to-paste Appium java-client locators.",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "publisher": "hakanngul",
   "license": "Apache-2.0",
   "repository": {
@@ -162,7 +162,7 @@
         "testflyAppiumInspector.session.fastStart": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Start sessions faster: no logcat / syslog capture, no repeated Android device setup after the first session, window animations off, and short idle waits (`waitForIdleTimeout` 300 ms on Android, 1 s on iOS instead of 10 s). Values in *Advanced capabilities (JSON)* win."
+          "markdownDescription": "Start sessions faster without changing the device: no logcat / syslog capture and short idle waits (`waitForIdleTimeout` 300 ms on Android, 1 s on iOS instead of 10 s). Values in *Advanced capabilities (JSON)* win."
         }
       }
     },

@@ -5,7 +5,7 @@
 A VS Code extension for Appium 3: start and stop the Appium server, see the installed drivers and every Android and iOS
 device in one place, and inspect native app screens with ready-to-paste Appium java-client locators.
 
-> **Status: 0.3.3, test release.** Everything below is built and covered by tests against fake Appium servers and
+> **Status: 0.3.4, test release.** Everything below is built and covered by tests against fake Appium servers and
 > a real Appium 3.8.0 server start/stop; sessions on real emulators, simulators and devices still need a first run on a
 > machine that has them. See [PLAN.md](PLAN.md).
 
@@ -32,6 +32,9 @@ device in one place, and inspect native app screens with ready-to-paste Appium j
     `xcrun simctl listapps`, `xcrun devicectl device info apps`) and offered in the package / bundle id field; with a
     single app of your own it is filled in. On Android, with the activity field empty, the launcher activity is read
     from the device (`-a MAIN -c LAUNCHER`) and passed as `appium:appActivity`; a typed activity that differs is flagged.
+  - **UiAutomation recovery (Android):** when a session fails with "UiAutomation not connected", the extension frees
+    UiAutomation on the device and tries again; if that fails too, it removes the UiAutomator2 server apps so Appium
+    installs them again, and tries once more. Your own apps are not touched.
   - **Screen and tree:** screenshot with element outlines, UI tree, Page Source tab with the raw XML, element attributes.
   - **Actions:** tap, long press, type, swipe, back (Android) and home, through W3C actions with `mobile:` fallbacks.
   - **Locators:** id, accessibility id, UiAutomator, iOS predicate, iOS class chain, class name and XPath, with exact
@@ -52,7 +55,7 @@ The generated classes were compiled with `javac` against java-client 11.0.0 and 
 ## Install
 
 ```bash
-code --install-extension testfly-appium-inspector-0.3.3.vsix
+code --install-extension testfly-appium-inspector-0.3.4.vsix
 ```
 
 Or in VS Code: Extensions view > `...` > *Install from VSIX...*. Then open the **TestFly Appium** view in the activity
@@ -99,7 +102,7 @@ signature lasts 7 days.
 | `testflyAppiumInspector.ios.*` | | Real iOS device signing, see above |
 | `testflyAppiumInspector.ios.preferDevicectl` | `false` | Start Appium with `APPIUM_XCUITEST_PREFER_DEVICECTL=1`, for a real iPhone that Appium does not find over USB (Wi-Fi). Simulator sessions fail on such a server |
 | `testflyAppiumInspector.autoRefreshAfterAction` | `true` | Read the screen again after an action |
-| `testflyAppiumInspector.session.fastStart` | `true` | Faster sessions: no logcat/syslog capture, Android device setup only on the first session, animations off, idle waits of 300 ms (Android) / 1 s (iOS) instead of 10 s. The advanced JSON wins |
+| `testflyAppiumInspector.session.fastStart` | `true` | Faster sessions: no logcat/syslog capture, idle waits of 300 ms (Android) / 1 s (iOS) instead of 10 s. Device settings are not touched. The advanced JSON wins |
 | `testflyAppiumInspector.codegen.javaClient` | `11` | `11` or `9-10`, see Java output |
 | `testflyAppiumInspector.codegen.style` | `pageFactory` | `pageFactory` or `appiumBy` |
 

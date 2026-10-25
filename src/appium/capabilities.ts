@@ -17,21 +17,21 @@ export interface CapabilityInput {
     signing?: IosSigning;
     /** The "Advanced capabilities (JSON)" editor; wins over the generated values. */
     extra?: Record<string, unknown>;
-    /** Fast start: skip what an inspector session does not need. `deviceInitialized`: Appium set this device up already. */
-    fast?: { deviceInitialized?: boolean };
+    /** Fast start: skip what an inspector session does not need. */
+    fast?: boolean;
 }
 
 /**
- * Capabilities that make a session start and respond faster, from the drivers' own advice: no log capture, no repeated
- * device setup, and short idle waits. UiAutomator2 waits up to 10 s for the UI to go idle before every source read and
- * action (`waitForIdleTimeout`), which an app with running animations never does; XCUITest has the same wait on iOS.
+ * Capabilities that make a session start and respond faster without touching the device: no log capture and short
+ * idle waits. UiAutomator2 waits up to 10 s for the UI to go idle before every source read and action
+ * (`waitForIdleTimeout`), which an app with running animations never does; XCUITest has the same wait on iOS.
+ * `disableWindowAnimation` and `skipDeviceInitialization` are left out on purpose: on recent emulators they make the
+ * UiAutomator2 server start without a UiAutomation connection ("UiAutomation not connected").
  */
-export function fastStartCapabilities(device: DeviceInfo, deviceInitialized = false): Record<string, unknown> {
+export function fastStartCapabilities(device: DeviceInfo): Record<string, unknown> {
     if (device.platform === 'android') {
         return {
             'appium:skipLogcatCapture': true,
-            'appium:disableWindowAnimation': true,
-            ...(deviceInitialized ? { 'appium:skipDeviceInitialization': true } : {}),
             'appium:settings': { waitForIdleTimeout: 300 },
         };
     }
@@ -87,7 +87,7 @@ export function buildCapabilities(input: CapabilityInput): Record<string, unknow
     }
 
     if (input.fast) {
-        Object.assign(caps, fastStartCapabilities(device, input.fast.deviceInitialized));
+        Object.assign(caps, fastStartCapabilities(device));
     }
 
     for (const [name, value] of Object.entries(input.extra ?? {})) {

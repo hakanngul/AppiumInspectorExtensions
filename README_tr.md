@@ -5,7 +5,7 @@
 Appium 3 için bir VS Code uzantısı: Appium sunucusunu başlatın ve durdurun, yüklü sürücüleri ve bütün Android ve iOS
 cihazları tek yerde görün ve native uygulama ekranlarını, hazır Appium java-client locator'larıyla inceleyin.
 
-> **Durum: 0.3.3, deneme sürümü.** Aşağıdakilerin hepsi yazıldı; sahte Appium sunucularıyla ve gerçek Appium 3.8.0
+> **Durum: 0.3.4, deneme sürümü.** Aşağıdakilerin hepsi yazıldı; sahte Appium sunucularıyla ve gerçek Appium 3.8.0
 > başlat/durdur ile test edildi. Gerçek emülatör, simülatör ve cihazlarda oturum henüz bunlara sahip bir makinede
 > denenmedi. Bkz. [PLAN.md](PLAN.md).
 
@@ -32,6 +32,9 @@ cihazları tek yerde görün ve native uygulama ekranlarını, hazır Appium jav
     `xcrun simctl listapps`, `xcrun devicectl device info apps`) ve paket / bundle id alanında liste olarak sunulur;
     cihazda size ait tek uygulama varsa alan doldurulur. Android'de aktivite alanı boşsa açılış aktivitesi cihazdan okunur
     (`-a MAIN -c LAUNCHER`) ve `appium:appActivity` olarak gönderilir; farklı bir aktivite yazılırsa uyarı çıkar.
+  - **UiAutomation kurtarma (Android):** oturum "UiAutomation not connected" ile düşerse uzantı cihazda UiAutomation'ı
+    serbest bırakıp yeniden dener; o da düşerse UiAutomator2 sunucu uygulamalarını kaldırır, Appium bunları yeniden kurar
+    ve bir kez daha dener. Sizin uygulamalarınıza dokunulmaz.
   - **Ekran ve ağaç:** Element çerçeveli ekran görüntüsü, UI ağacı, ham XML'li Page Source sekmesi, element öznitelikleri.
   - **Eylemler:** Tap, long press, yazı, swipe, back (Android) ve home; W3C actions ile, yedek olarak `mobile:` komutları.
   - **Locator'lar:** id, accessibility id, UiAutomator, iOS predicate, iOS class chain, class name ve XPath; o anki ekranda
@@ -52,7 +55,7 @@ cihazları tek yerde görün ve native uygulama ekranlarını, hazır Appium jav
 ## Kurulum
 
 ```bash
-code --install-extension testfly-appium-inspector-0.3.3.vsix
+code --install-extension testfly-appium-inspector-0.3.4.vsix
 ```
 
 Ya da VS Code'da: Extensions görünümü > `...` > *Install from VSIX...*. Sonra etkinlik çubuğundan **TestFly Appium**
@@ -99,7 +102,7 @@ geçerlidir.
 | `testflyAppiumInspector.ios.*` | | Gerçek iOS cihaz imzalama, yukarıya bakın |
 | `testflyAppiumInspector.ios.preferDevicectl` | `false` | Appium'u `APPIUM_XCUITEST_PREFER_DEVICECTL=1` ile başlat; Appium'un USB üzerinden bulamadığı (Wi-Fi) gerçek iPhone için. Bu sunucuda simülatör oturumları açılmaz |
 | `testflyAppiumInspector.autoRefreshAfterAction` | `true` | Bir eylemden sonra ekranı yeniden oku |
-| `testflyAppiumInspector.session.fastStart` | `true` | Daha hızlı oturum: logcat/syslog kaydı yok, Android cihaz hazırlığı yalnızca ilk oturumda, animasyonlar kapalı, boşta bekleme 10 sn yerine 300 ms (Android) / 1 sn (iOS). Gelişmiş JSON önceliklidir |
+| `testflyAppiumInspector.session.fastStart` | `true` | Daha hızlı oturum: logcat/syslog kaydı yok, boşta bekleme 10 sn yerine 300 ms (Android) / 1 sn (iOS). Cihaz ayarlarına dokunulmaz. Gelişmiş JSON önceliklidir |
 | `testflyAppiumInspector.codegen.javaClient` | `11` | `11` ya da `9-10`, bkz. Java çıktısı |
 | `testflyAppiumInspector.codegen.style` | `pageFactory` | `pageFactory` ya da `appiumBy` |
 

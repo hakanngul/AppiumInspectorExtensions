@@ -4,9 +4,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const args = process.argv.slice(2);
 const shell = args.indexOf('shell');
-const cmd = args.slice(shell + 1);
+const cmd = shell >= 0 ? args.slice(shell + 1) : args.slice(2);
 if (process.env.FAKE_ADB_LOG) fs.appendFileSync(process.env.FAKE_ADB_LOG, cmd.join(' ') + '\n');
-if (cmd[0] === 'am' && cmd[1] === 'force-stop' || cmd[0] === 'pkill') process.exit(0);
+if (cmd[0] === 'am' && cmd[1] === 'force-stop' || cmd[0] === 'pkill' || cmd[0] === 'uninstall') process.exit(0);
 if (cmd[0] === 'pm' && cmd[1] === 'list') {
     process.stdout.write(fs.readFileSync(path.join(__dirname, 'pm-list-packages.txt'), 'utf8'));
 } else if (cmd[0] === 'cmd' && cmd.includes('resolve-activity')) {
