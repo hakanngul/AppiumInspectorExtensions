@@ -55,6 +55,9 @@ export class InspectorPanel {
     private busy = false;
     /** Installed apps per device, read once per panel unless reloaded. */
     private readonly apps = new Map<string, Promise<InstalledApp[]>>();
+    /** Launcher activities per device and package (`-a MAIN -c LAUNCHER`), read once per panel. */
+    private readonly launchers = new Map<string, Promise<string | undefined>>();
+    private previewSeq = 0;
     private readonly subscriptions: vscode.Disposable[] = [];
 
     static show(context: vscode.ExtensionContext, controller: AppiumController, deviceId?: string) {
@@ -139,8 +142,12 @@ export class InspectorPanel {
                         }
                     }
                     return;
-                case 'preview':
-                    return this.post({ type: 'preview', ...this.prepare(m.form) });
+                case 'preview': {
+                    // previews are asynchronous now (the launcher activity); only the newest one is shown
+                    const seq = ++this.previewSeq;
+                    const prepared = await this.prepare(m.form);
+                    return seq === this.previewSeq ? this.post({ type: 'preview', ...prepared }) : undefined;
+                }
                 case 'startSession':
                     return await this.startSession(m.form);
                 case 'endSession':
@@ -154,7 +161,7 @@ export class InspectorPanel {
                 case 'listApps':
                     return await this.listApps(m.deviceId, m.force);
                 case 'resolveActivity': {
-                    const activity = await launchActivity(vscode.workspace.getConfiguration(SECTION).get('adbPath', ''), m.deviceId, m.package).catch(() => undefined);
+                    const activity = await this.launcher(m.deviceId, m.package);
                     return this.post({ type: 'activity', deviceId: m.deviceId, package: m.package, activity });
                 }
                 case 'boot':
@@ -212,17 +219,41 @@ export class InspectorPanel {
         }
     }
 
+    private launcher(deviceId: string, pkg: string): Promise<string | undefined> {
+        const key = `${deviceId}/${pkg}`;
+        if (!this.launchers.has(key)) {
+            const adb = vscode.workspace.getConfiguration(SECTION).get('adbPath', '');
+            this.launchers.set(key, launchActivity(adb, deviceId, pkg).catch(() => undefined));
+        }
+        return this.launchers.get(key)!;
+    }
+
     /** Capabilities for the form, and the problems that would make Appium refuse them. */
-    private prepare(form: SessionForm): { capabilities?: Record<string, unknown>; problems: string[]; warnings: string[]; device?: DeviceInfo } {
+    private async prepare(form: SessionForm): Promise<{ capabilities?: Record<string, unknown>; problems: string[]; warnings: string[]; notes: string[]; device?: DeviceInfo }> {
         const device = this.controller.current.devices.find(d => d.id === form.deviceId);
         if (!device) {
-            return { problems: ['Choose a device.'], warnings: [] };
+            return { problems: ['Choose a device.'], warnings: [], notes: [] };
         }
         const extra = parseExtraCapabilities(form.extra);
         const cfg = vscode.workspace.getConfiguration(SECTION);
+        const notes: string[] = [];
+        const warnings: string[] = [];
+        let app = form.app;
+        // Android, installed app: the launcher activity comes from the device with the LAUNCHER category. Appium's own
+        // lookup (resolve-activity without a category) can land on an activity that does not start, e.g. a disabled alias.
+        if (app.kind === 'installed' && device.platform === 'android' && device.state === 'ready' && app.appPackage?.trim()) {
+            const found = await this.launcher(device.id, app.appPackage.trim());
+            const typed = app.appActivity?.trim();
+            if (found && !typed) {
+                app = { ...app, appActivity: found };
+                notes.push(`App activity from the device: ${found}`);
+            } else if (found && typed && !sameActivity(typed, found, app.appPackage.trim())) {
+                warnings.push(`The device starts ${app.appPackage.trim()} with ${found}; "${typed}" may not exist. Empty the activity field to use the device's.`);
+            }
+        }
         const input: CapabilityInput = {
             device,
-            app: form.app,
+            app,
             extra: extra.value,
             signing: {
                 xcodeOrgId: cfg.get('ios.xcodeOrgId', ''),
@@ -231,7 +262,7 @@ export class InspectorPanel {
             },
         };
         const problems = capabilityProblems(input);
-        const warnings = capabilityWarnings(input);
+        warnings.push(...capabilityWarnings(input));
         if (extra.error) {
             problems.push(extra.error);
         }
@@ -250,14 +281,14 @@ export class InspectorPanel {
         if (device.state === 'shutdown') {
             problems.push(`${device.name} is shut down. Boot it first.`);
         }
-        return { capabilities: buildCapabilities(input), problems, warnings, device };
+        return { capabilities: buildCapabilities(input), problems, warnings, notes, device };
     }
 
     private async startSession(form: SessionForm) {
         if (this.busy) {
             return;
         }
-        const prepared = this.prepare(form);
+        const prepared = await this.prepare(form);
         if (prepared.problems.length || !prepared.capabilities || !prepared.device) {
             this.post({ type: 'preview', ...prepared });
             throw new Error(prepared.problems.join(' '));
@@ -393,3 +424,11 @@ export class InspectorPanel {
     }
 }
 
+/** `.Main`, `com.app.Main` and `com.app/.Main` name the same activity of package `com.app`. */
+export function sameActivity(a: string, b: string, pkg: string): boolean {
+    const full = (x: string) => {
+        const name = x.includes('/') ? x.slice(x.indexOf('/') + 1) : x;
+        return name.startsWith('.') ? pkg + name : name;
+    };
+    return full(a) === full(b);
+}

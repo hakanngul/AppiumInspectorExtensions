@@ -44,7 +44,7 @@ Module._load = function (request, ...rest) {
     return request === 'vscode' ? vscodeStub : load.call(this, request, ...rest);
 };
 
-const { InspectorPanel } = require('../out/inspectorPanel.js');
+const { InspectorPanel, sameActivity } = require('../out/inspectorPanel.js');
 const { AppiumController } = require('../out/controller.js');
 
 // ── a fake Appium with one session ──────────────────────────────────────
@@ -107,6 +107,19 @@ test('form, session, screen, tap, verify and end through the panel', async () =>
         await receive({ type: 'resolveActivity', deviceId: 'emulator-5554', package: 'com.starlettech.letsbet.stage' });
         assert.strictEqual(posted.filter(m => m.type === 'activity').pop().activity, 'com.starlettech.letsbet.ui.splash.SplashActivity');
 
+        // an empty activity: the launcher activity from the device goes into the capabilities
+        const letsbet = { deviceId: 'emulator-5554', app: { kind: 'installed', appPackage: 'com.starlettech.letsbet.stage', appActivity: '' }, extra: '' };
+        await receive({ type: 'preview', form: letsbet });
+        let p = posted.filter(m => m.type === 'preview').pop();
+        assert.strictEqual(p.capabilities['appium:appActivity'], 'com.starlettech.letsbet.ui.splash.SplashActivity');
+        assert.match(p.notes[0], /App activity from the device/);
+        // a typed activity that is not the launcher: a warning, and the typed value is kept
+        await receive({ type: 'preview', form: { ...letsbet, app: { ...letsbet.app, appActivity: '.MainActivity' } } });
+        p = posted.filter(m => m.type === 'preview').pop();
+        assert.strictEqual(p.capabilities['appium:appActivity'], '.MainActivity');
+        assert.match(p.warnings[0], /starts com\.starlettech\.letsbet\.stage with com\.starlettech\.letsbet\.ui\.splash\.SplashActivity/);
+        assert.deepStrictEqual(p.problems, []);
+
         const form = { deviceId: 'emulator-5554', app: { kind: 'installed', appPackage: 'com.example.shop', appActivity: '' }, extra: '{"autoGrantPermissions": true}' };
         await receive({ type: 'preview', form });
         const preview = posted.filter(m => m.type === 'preview').pop();
@@ -144,4 +157,10 @@ test('form, session, screen, tap, verify and end through the panel', async () =>
         controller.dispose();
         server.close();
     }
+});
+
+test('sameActivity: short, full and component names of one activity', () => {
+    assert.ok(sameActivity('.Main', 'com.app.Main', 'com.app'));
+    assert.ok(sameActivity('com.app/.Main', 'com.app.Main', 'com.app'));
+    assert.ok(!sameActivity('.MainActivity', 'com.app.ui.splash.SplashActivity', 'com.app'));
 });

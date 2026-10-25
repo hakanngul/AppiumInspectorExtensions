@@ -232,7 +232,7 @@
         const d = currentDevice();
         const pkg = $('appPackage').value.trim();
         if (!d || d.platform !== 'android' || !state.apps.list.some(a => a.id === pkg)) {
-            $('appActivity').placeholder = '.MainActivity';
+            $('appActivity').placeholder = 'Empty: the launcher activity from the device';
             lastResolved = '';
             return;
         }
@@ -243,7 +243,7 @@
 
     function onActivity(m) {
         if (m.deviceId !== state.form.deviceId || m.package !== $('appPackage').value.trim()) return;
-        $('appActivity').placeholder = m.activity ? `${m.activity}  (auto)` : 'No launcher activity found';
+        $('appActivity').placeholder = m.activity ? `${m.activity}  (from the device)` : 'Empty: Appium looks for the launcher activity';
         $('appActivity').title = m.activity ? 'Launcher activity found on the device; Appium starts it when this field is empty.' : '';
     }
 
@@ -293,7 +293,9 @@
         box.innerHTML = '';
         for (const p of m.problems || []) box.append(li(p, ''));
         for (const w of m.warnings || []) box.append(li(w, 'warn'));
+        for (const n of m.notes || []) box.append(li(n, 'info'));
         box.hidden = !box.children.length;
+        box.classList.toggle('only-info', !(m.problems || []).length && !(m.warnings || []).length);
         $('startSession').disabled = !!(m.problems && m.problems.length) || state.env.busy;
     }
 
