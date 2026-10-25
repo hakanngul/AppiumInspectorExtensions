@@ -64,7 +64,7 @@ test('start, check, stop: the server this extension starts', { skip: !posix }, a
     process.env.FAKE_APPIUM_ARGS = argsFile;
     const states = [];
     const log = [];
-    const server = new AppiumServer(options(port, { basePath: '/wd/hub' }), l => log.push(l), i => states.push(i.state));
+    const server = new AppiumServer(options(port, { basePath: '/wd/hub', env: { APPIUM_XCUITEST_PREFER_DEVICECTL: '1' } }), l => log.push(l), i => states.push(i.state));
     try {
         const info = await server.start(10_000);
         assert.strictEqual(info.state, 'running');
@@ -74,6 +74,7 @@ test('start, check, stop: the server this extension starts', { skip: !posix }, a
         assert.deepStrictEqual(JSON.parse(fs.readFileSync(argsFile, 'utf8')),
             ['server', '--address', '127.0.0.1', '--port', String(port), '--base-path', '/wd/hub', '--allow-cors']);
         assert.ok(log.some(l => /listener started/.test(l)), 'server output reaches the log');
+        assert.strictEqual(JSON.parse(fs.readFileSync(argsFile + '.env', 'utf8')).APPIUM_XCUITEST_PREFER_DEVICECTL, '1', 'extra env reaches the server');
         assert.strictEqual((await server.start()).state, 'running', 'a second start keeps the running server');
 
         const stopped = await server.stop();
@@ -84,6 +85,7 @@ test('start, check, stop: the server this extension starts', { skip: !posix }, a
     } finally {
         delete process.env.FAKE_APPIUM_ARGS;
         fs.rmSync(argsFile, { force: true });
+        fs.rmSync(argsFile + '.env', { force: true });
         server.dispose();
     }
 });

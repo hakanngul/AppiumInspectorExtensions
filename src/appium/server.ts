@@ -1,5 +1,5 @@
 import { ChildProcess } from 'child_process';
-import { delay, killTree, killTreeNow, run, start, ToolNotFoundError } from '../process';
+import { delay, killTree, killTreeNow, run, start, ToolNotFoundError, toolEnv } from '../process';
 import { AppiumClient, AppiumError, serverUrl } from './client';
 
 export interface ServerOptions {
@@ -9,6 +9,8 @@ export interface ServerOptions {
     port: number;
     basePath: string;
     allowCors: boolean;
+    /** Extra environment for the server process. */
+    env?: Record<string, string>;
 }
 
 /**
@@ -96,7 +98,10 @@ export class AppiumServer {
         this.log(`$ ${this.options.appiumPath} ${args.join(' ')}`);
         let child: ChildProcess;
         try {
-            child = await start(this.options.appiumPath, args);
+            child = await start(this.options.appiumPath, args, await toolEnv(this.options.env));
+            for (const [k, v] of Object.entries(this.options.env ?? {})) {
+                this.log(`  ${k}=${v}`);
+            }
         } catch (e) {
             this.set('stopped');
             throw e instanceof ToolNotFoundError ? new Error(`Appium was not found (${this.options.appiumPath}). ${INSTALL_HELP}`) : e;

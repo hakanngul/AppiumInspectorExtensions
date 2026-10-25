@@ -15,6 +15,7 @@ if (args[0] === '--version') {
     process.stdout.write(fs.readFileSync(path.join(__dirname, 'appium-driver-list.json'), 'utf8'));
 } else if (args[0] === 'server') {
     if (process.env.FAKE_APPIUM_ARGS) fs.writeFileSync(process.env.FAKE_APPIUM_ARGS, JSON.stringify(args));
+    if (process.env.FAKE_APPIUM_ARGS) fs.writeFileSync(process.env.FAKE_APPIUM_ARGS + '.env', JSON.stringify({ APPIUM_XCUITEST_PREFER_DEVICECTL: process.env.APPIUM_XCUITEST_PREFER_DEVICECTL }));
     if (mode === 'crash') {
         console.error('[Appium] Could not start: fake failure');
         process.exit(1);

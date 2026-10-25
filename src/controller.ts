@@ -63,6 +63,9 @@ export class AppiumController implements vscode.Disposable {
             port: cfg.get('appium.port', 4723),
             basePath: cfg.get('appium.basePath', '/'),
             allowCors: cfg.get('appium.allowCors', true),
+            // XCUITest finds real iPhones through usbmux or the iOS 18+ tunnel registry by default; this extension lists
+            // them with devicectl. The driver's own switch makes it use devicectl too, so both see the same devices.
+            env: cfg.get('ios.preferDevicectl', true) ? { APPIUM_XCUITEST_PREFER_DEVICECTL: '1' } : {},
         };
     }
 

@@ -404,7 +404,12 @@ export class InspectorPanel {
     }
 
     private fail(e: unknown) {
-        const message = (e as Error).message;
+        let message = (e as Error).message;
+        if (/Unknown device or simulator UDID/.test(message)) {
+            message += this.controller.current.server.state === 'external'
+                ? ' The Appium server was started outside VS Code: start it with APPIUM_XCUITEST_PREFER_DEVICECTL=1, or stop it and press Start Appium here. Connect the iPhone with a cable.'
+                : ' Connect the iPhone with a cable, unlock it and trust this Mac. If the server was started before this setting, stop and start Appium again.';
+        }
         if (e instanceof AppiumError && e.stacktrace) {
             this.controller.output.appendLine(e.stacktrace);
         }
