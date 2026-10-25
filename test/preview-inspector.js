@@ -81,6 +81,10 @@ async function run(browser, platform) {
         assert.deepStrictEqual(await p.$$eval('#installedApps option', o => o.map(x => x.value)), ['com.example.shop', 'com.starlettech.letsbet.stage']);
         assert.match(await p.textContent('#appsNote'), /2 apps installed on Pixel 8 API 35/);
         assert.strictEqual(await p.inputValue('#appPackage'), '', 'two apps: nothing is chosen for the user');
+        // a pick from the list that VS Code reports as 'change' only still reaches the form
+        await p.evaluate(() => { const f = document.getElementById('appPackage'); f.value = 'com.starlettech.letsbet.stage'; f.dispatchEvent(new Event('change')); });
+        await p.waitForTimeout(300);
+        assert.strictEqual((await sent()).filter(m => m.type === 'preview').pop().form.app.appPackage, 'com.starlettech.letsbet.stage');
         await p.fill('#appPackage', 'com.example.shop');
         await settle();
         const resolve = (await sent()).filter(m => m.type === 'resolveActivity').pop();

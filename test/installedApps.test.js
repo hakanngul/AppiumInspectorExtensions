@@ -7,9 +7,8 @@ const { parseAndroidPackages, parseLaunchActivity, parseOpenStepPlist, parseSimc
 const fixture = name => fs.readFileSync(path.join(__dirname, 'fixtures', name), 'utf8');
 
 test('Android: third-party packages from pm list packages -3, sorted', () => {
-    assert.deepStrictEqual(parseAndroidPackages(fixture('pm-list-packages.txt')).map(a => a.id), [
-        'com.example.shop', 'com.starlettech.letsbet.stage', 'io.appium.settings', 'io.appium.uiautomator2.server', 'io.appium.uiautomator2.server.test',
-    ]);
+    assert.deepStrictEqual(parseAndroidPackages(fixture('pm-list-packages.txt')).map(a => a.id), ['com.example.shop', 'com.starlettech.letsbet.stage'],
+        'Appium\'s own helper packages are left out');
     assert.deepStrictEqual(parseAndroidPackages('\r\npackage:a.b\r\n'), [{ id: 'a.b' }]);
     assert.deepStrictEqual(parseAndroidPackages(''), []);
 });
@@ -29,7 +28,6 @@ test('OpenStep property lists: dictionaries, arrays, quoted and bare strings, co
 
 test('iOS simulator: simctl listapps, the user\'s apps first', () => {
     assert.deepStrictEqual(parseSimctlApps(fixture('simctl-listapps.txt')), [
-        { id: 'com.facebook.WebDriverAgentRunner.xctrunner', name: 'WebDriverAgentRunner-Runner', system: false },
         { id: 'com.nesine.new-bet-dev', name: 'Nesine Dev', system: false },
         { id: 'com.apple.Preferences', name: 'Settings', system: true },
     ]);

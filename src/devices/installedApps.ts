@@ -12,13 +12,18 @@ export interface InstalledApp {
 
 const byUserThenId = (a: InstalledApp, b: InstalledApp) => Number(!!a.system) - Number(!!b.system) || a.id.localeCompare(b.id);
 
+/** Appium's own helper apps (UiAutomator2 server, Appium Settings, WebDriverAgent): never the app under test. */
+export function isAppiumHelper(id: string): boolean {
+    return /^io\.appium\./.test(id) || /^com\.facebook\.WebDriverAgentRunner/.test(id) || /\.WebDriverAgentRunner(\.xctrunner)?$/.test(id);
+}
+
 /** `adb shell pm list packages -3`: lines `package:com.example.app`. */
 export function parseAndroidPackages(stdout: string): InstalledApp[] {
     const ids = new Set<string>();
     for (const m of stdout.matchAll(/^package:(\S+)\s*$/gm)) {
         ids.add(m[1]);
     }
-    return [...ids].sort((a, b) => a.localeCompare(b)).map(id => ({ id }));
+    return [...ids].filter(id => !isAppiumHelper(id)).sort((a, b) => a.localeCompare(b)).map(id => ({ id }));
 }
 
 /**
@@ -130,7 +135,7 @@ export function parseSimctlApps(stdout: string): InstalledApp[] {
     const trimmed = stdout.trim();
     const data = (trimmed.startsWith('{') && trimmed.includes('":') ? JSON.parse(trimmed) : parseOpenStepPlist(trimmed)) as Record<string, any>;
     return Object.entries(data ?? {})
-        .filter(([, v]) => v && typeof v === 'object')
+        .filter(([id, v]) => v && typeof v === 'object' && !isAppiumHelper(String(v.CFBundleIdentifier ?? id)))
         .map(([id, v]) => ({
             id: String(v.CFBundleIdentifier ?? id),
             name: String(v.CFBundleDisplayName ?? v.CFBundleName ?? '') || undefined,
@@ -143,7 +148,7 @@ export function parseSimctlApps(stdout: string): InstalledApp[] {
 export function parseDevicectlApps(json: string): InstalledApp[] {
     const apps = (JSON.parse(json)?.result?.apps ?? []) as any[];
     return apps
-        .filter(a => typeof a?.bundleIdentifier === 'string' && !a.hidden && !a.appClip && !a.internalApp)
+        .filter(a => typeof a?.bundleIdentifier === 'string' && !a.hidden && !a.appClip && !a.internalApp && !isAppiumHelper(a.bundleIdentifier))
         .map(a => ({ id: a.bundleIdentifier as string, name: typeof a.name === 'string' ? a.name : undefined, system: a.removable === false }))
         .sort(byUserThenId);
 }

@@ -333,7 +333,9 @@
         readForm();
         requestPreview();
     }));
-    ['appPackage', 'appActivity', 'bundleId', 'appPath', 'extra'].forEach(id => $(id).addEventListener('input', () => { readForm(); requestPreview(); }));
+    // A pick from the field's app list may arrive as 'change' only (VS Code webviews), so both events update the form.
+    ['appPackage', 'appActivity', 'bundleId', 'appPath', 'extra'].forEach(id => ['input', 'change'].forEach(ev =>
+        $(id).addEventListener(ev, () => { readForm(); requestPreview(); })));
     $('appPackage').addEventListener('change', resolveActivity);
     $('appPackage').addEventListener('input', resolveActivity);
     document.querySelectorAll('.apps-reload').forEach(b => b.addEventListener('click', () => requestApps(true)));
