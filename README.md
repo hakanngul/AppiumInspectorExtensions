@@ -5,7 +5,7 @@
 A VS Code extension for Appium 3: start and stop the Appium server, see the installed drivers and every Android and iOS
 device in one place, and inspect native app screens with ready-to-paste Appium java-client locators.
 
-> **Status: 0.3.1, test release.** Everything below is built and covered by tests against fake Appium servers and
+> **Status: 0.3.2, test release.** Everything below is built and covered by tests against fake Appium servers and
 > a real Appium 3.8.0 server start/stop; sessions on real emulators, simulators and devices still need a first run on a
 > machine that has them. See [PLAN.md](PLAN.md).
 
@@ -13,7 +13,8 @@ device in one place, and inspect native app screens with ready-to-paste Appium j
 
 - **Appium server:** Start and Stop from the sidebar. The server listens on `127.0.0.1:4723` by default; its output goes
   to the *TestFly Appium* output channel. A server that already runs on the address (started in a terminal, for example)
-  is used as is and never stopped by the extension. The server the extension started is stopped when VS Code closes.
+  is used as is; Stop asks before stopping it. **Restart** stops whatever holds the port (asking first) and starts a clean
+  server with the current settings. The server the extension started is stopped when VS Code closes.
 - **Drivers:** UiAutomator2 and (on macOS) XCUITest, read from `appium driver list --installed`. A missing driver has a
   copy button for its install command.
 - **Devices:** Android emulators and devices (adb), iOS simulators (`xcrun simctl`) and real iOS devices
@@ -51,7 +52,7 @@ The generated classes were compiled with `javac` against java-client 11.0.0 and 
 ## Install
 
 ```bash
-code --install-extension testfly-appium-inspector-0.3.1.vsix
+code --install-extension testfly-appium-inspector-0.3.2.vsix
 ```
 
 Or in VS Code: Extensions view > `...` > *Install from VSIX...*. Then open the **TestFly Appium** view in the activity
@@ -107,7 +108,7 @@ VS Code started from the Dock does not see your shell profile; the extension rea
 
 ## Commands
 
-*TestFly Appium: Open Appium Inspector*, *Start Appium Server*, *Stop Appium Server*, *Show Appium Server Log*,
+*TestFly Appium: Open Appium Inspector*, *Start Appium Server*, *Stop Appium Server*, *Restart Appium Server*, *Show Appium Server Log*,
 *Reload Devices*.
 
 ## Development

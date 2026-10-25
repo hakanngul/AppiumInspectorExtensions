@@ -94,6 +94,21 @@ export function adbCommand(setting: string, env: NodeJS.ProcessEnv = process.env
     return 'adb';
 }
 
+/**
+ * Frees Android's UiAutomation connection for a new UiAutomator2 session: stops the UiAutomator2 server apps left from
+ * an earlier session and any `uiautomator` shell process (other inspectors and tools run one). Errors are ignored.
+ */
+export async function resetUiAutomation(adbSetting: string, serial: string): Promise<void> {
+    const adb = await resolveAdb(adbSetting);
+    for (const args of [
+        ['shell', 'am', 'force-stop', 'io.appium.uiautomator2.server.test'],
+        ['shell', 'am', 'force-stop', 'io.appium.uiautomator2.server'],
+        ['shell', 'pkill', '-f', 'uiautomator'],
+    ]) {
+        await run(adb, ['-s', serial, ...args], 10_000).catch(() => undefined);
+    }
+}
+
 /** adbCommand with the environment the extension runs tools in (login shell ANDROID_HOME included). */
 export async function resolveAdb(setting: string): Promise<string> {
     return adbCommand(setting, await toolEnv());

@@ -7,7 +7,7 @@ import { webviewHtml } from './webview';
 
 /** Messages the sidebar sends; see media/sidebar.js. */
 type Inbound =
-    | { type: 'ready' | 'start' | 'stop' | 'log' | 'settings' | 'reloadDevices' | 'reloadDrivers' }
+    | { type: 'ready' | 'start' | 'stop' | 'restart' | 'log' | 'settings' | 'reloadDevices' | 'reloadDrivers' }
     | { type: 'boot'; id: string }
     | { type: 'inspect'; id?: string }
     | { type: 'stopPort'; pid: number }
@@ -76,6 +76,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 return this.controller.start();
             case 'stop':
                 return this.controller.stop();
+            case 'restart':
+                return this.controller.restart();
             case 'log':
                 return this.controller.output.show(true);
             case 'settings':

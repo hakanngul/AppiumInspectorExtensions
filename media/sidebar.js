@@ -207,6 +207,7 @@
     });
     $('copyUrl').addEventListener('click', () => vscode.postMessage({ type: 'copy', text: url, label: 'server URL' }));
     $('showLog').addEventListener('click', () => vscode.postMessage({ type: 'log' }));
+    $('restartServer').addEventListener('click', () => vscode.postMessage({ type: 'restart' }));
     $('reloadDevices').addEventListener('click', () => vscode.postMessage({ type: 'reloadDevices' }));
     $('reloadDrivers').addEventListener('click', () => vscode.postMessage({ type: 'reloadDrivers' }));
     $('openInspector').addEventListener('click', () => vscode.postMessage({ type: 'inspect' }));

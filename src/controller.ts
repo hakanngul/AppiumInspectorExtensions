@@ -141,7 +141,8 @@ export class AppiumController implements vscode.Disposable {
                 void vscode.window.showWarningMessage(`No process was found on port ${this.server.options.port}; stop the Appium server where it runs.`);
                 return;
             }
-            return this.stopPort(holder.pid);
+            await this.stopPort(holder.pid);
+            return;
         }
         this.update({ busy: true, error: undefined });
         try {
@@ -176,23 +177,49 @@ export class AppiumController implements vscode.Disposable {
     }
 
     /** Stops the process holding an Appium port, after asking; the server this extension started is stopped normally. */
-    async stopPort(pid: number): Promise<void> {
+    async stopPort(pid: number): Promise<boolean> {
         const uses = this.state.ports.filter(p => p.pid === pid);
         if (pid === this.server.pid) {
-            return this.stop();
+            await this.stop();
+            return !this.server.owned;
         }
         const what = uses.length ? `${uses[0].command || 'process'} (pid ${pid}) on port ${uses.map(u => u.port).join(', ')} — ${uses[0].label}` : `process ${pid}`;
         const choice = await vscode.window.showWarningMessage(`Stop ${what}?`, { modal: true, detail: 'It was not started by this extension. Unsaved work in that process is lost.' }, 'Stop process');
         if (choice !== 'Stop process') {
-            return;
+            return false;
         }
+        let stopped = false;
         try {
             await stopProcess(pid);
             this.output.appendLine(`Stopped ${what}`);
+            stopped = true;
         } catch (e) {
             this.fail(e);
         }
         await Promise.all([this.refreshPorts(), this.checkServer()]);
+        return stopped;
+    }
+
+    /**
+     * A clean server with the current settings: stops whatever holds the server port (asking first when this extension
+     * did not start it, e.g. a server left over from an earlier VS Code window or version), then starts a new one.
+     */
+    async restart(): Promise<void> {
+        await this.checkServer();
+        if (this.server.owned) {
+            await this.stop();
+        } else if (this.state.server.state === 'external') {
+            await this.refreshPorts();
+            const holder = this.state.ports.find(p => p.port === this.server.options.port);
+            if (holder && !(await this.stopPort(holder.pid))) {
+                return;
+            }
+        }
+        // settings may have changed while an older server ran
+        this.server.dispose();
+        this.server = this.createServer();
+        this.update({ server: this.server.current });
+        await this.start();
     }
 
     /** Appium version and installed drivers, from the Appium CLI. */

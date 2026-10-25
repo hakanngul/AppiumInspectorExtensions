@@ -5,7 +5,7 @@
 Appium 3 için bir VS Code uzantısı: Appium sunucusunu başlatın ve durdurun, yüklü sürücüleri ve bütün Android ve iOS
 cihazları tek yerde görün ve native uygulama ekranlarını, hazır Appium java-client locator'larıyla inceleyin.
 
-> **Durum: 0.3.1, deneme sürümü.** Aşağıdakilerin hepsi yazıldı; sahte Appium sunucularıyla ve gerçek Appium 3.8.0
+> **Durum: 0.3.2, deneme sürümü.** Aşağıdakilerin hepsi yazıldı; sahte Appium sunucularıyla ve gerçek Appium 3.8.0
 > başlat/durdur ile test edildi. Gerçek emülatör, simülatör ve cihazlarda oturum henüz bunlara sahip bir makinede
 > denenmedi. Bkz. [PLAN.md](PLAN.md).
 
@@ -13,7 +13,8 @@ cihazları tek yerde görün ve native uygulama ekranlarını, hazır Appium jav
 
 - **Appium sunucusu:** Kenar çubuğundan Start ve Stop. Sunucu varsayılan olarak `127.0.0.1:4723` adresinde dinler; çıktısı
   *TestFly Appium* çıktı kanalına yazılır. Adreste zaten çalışan bir sunucu (örneğin terminalden başlatılmış) olduğu gibi
-  kullanılır ve uzantı onu asla durdurmaz. Uzantının başlattığı sunucu VS Code kapanınca durdurulur.
+  kullanılır; Stop onu durdurmadan önce sorar. **Restart** portu tutan süreci (önce sorarak) durdurur ve güncel ayarlarla
+  temiz bir sunucu başlatır. Uzantının başlattığı sunucu VS Code kapanınca durdurulur.
 - **Sürücüler:** UiAutomator2 ve (macOS'ta) XCUITest, `appium driver list --installed` ile okunur. Eksik bir sürücünün
   kurulum komutu tek tıkla kopyalanır.
 - **Cihazlar:** Android emülatör ve cihazlar (adb), iOS simülatörleri (`xcrun simctl`) ve gerçek iOS cihazlar
@@ -51,7 +52,7 @@ cihazları tek yerde görün ve native uygulama ekranlarını, hazır Appium jav
 ## Kurulum
 
 ```bash
-code --install-extension testfly-appium-inspector-0.3.1.vsix
+code --install-extension testfly-appium-inspector-0.3.2.vsix
 ```
 
 Ya da VS Code'da: Extensions görünümü > `...` > *Install from VSIX...*. Sonra etkinlik çubuğundan **TestFly Appium**
@@ -107,7 +108,7 @@ Appium'a geçirir. Appium ya da adb yine bulunamazsa yolunu yukarıdaki ayarlard
 
 ## Komutlar
 
-*TestFly Appium: Open Appium Inspector*, *Start Appium Server*, *Stop Appium Server*, *Show Appium Server Log*,
+*TestFly Appium: Open Appium Inspector*, *Start Appium Server*, *Stop Appium Server*, *Restart Appium Server*, *Show Appium Server Log*,
 *Reload Devices*.
 
 ## Geliştirme

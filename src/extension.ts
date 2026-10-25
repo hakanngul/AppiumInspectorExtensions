@@ -14,6 +14,7 @@ export function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(vscode.commands.registerCommand(`${SECTION}.${name}`, () => controller && run(controller)));
     command('startServer', c => c.start());
     command('stopServer', c => c.stop());
+    command('restartServer', c => c.restart());
     command('showServerLog', c => c.output.show(true));
     command('refreshDevices', c => c.refreshDevices());
     command('open', c => InspectorPanel.show(context, c));

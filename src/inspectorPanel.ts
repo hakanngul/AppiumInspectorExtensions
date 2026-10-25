@@ -8,6 +8,7 @@ import { InspectorSession, Locator } from './appium/session';
 import { checkAppFile } from './apps';
 import { firstFreePort, isPortFree } from './ports';
 import { AppiumController, ControllerState, SECTION } from './controller';
+import { resetUiAutomation } from './devices/adb';
 import { InstalledApp, launchActivity, listInstalledApps } from './devices/installedApps';
 import { DeviceInfo } from './devices/types';
 import { webviewHtml } from './webview';
@@ -326,9 +327,22 @@ export class InspectorPanel {
             this.lastDevice = device;
             this.status('loading', `Starting a session on ${device.name}…${device.platform === 'ios' ? ' The first iOS session builds WebDriverAgent and can take minutes.' : ''}`);
             this.controller.output.appendLine(`New session on ${device.name}: ${JSON.stringify(prepared.capabilities)}`);
-            this.session = await vscode.window.withProgress(
+            const open = () => vscode.window.withProgress(
                 { location: vscode.ProgressLocation.Notification, title: `Appium: starting a session on ${device.name}…`, cancellable: false },
                 () => this.controller.newSession(device, prepared.capabilities!));
+            try {
+                this.session = await open();
+            } catch (e) {
+                // Another UiAutomation client (an earlier UiAutomator2 server, another inspector) still holds the
+                // connection: free it on the device and try once more.
+                if (device.platform !== 'android' || !/UiAutomation not connected/i.test((e as Error).message)) {
+                    throw e;
+                }
+                this.controller.output.appendLine(`${(e as Error).message}\nFreeing UiAutomation on ${device.name} and trying again…`);
+                this.status('loading', 'UiAutomation was busy; freeing it and starting the session again…');
+                await resetUiAutomation(vscode.workspace.getConfiguration(SECTION).get('adbPath', ''), device.id);
+                this.session = await open();
+            }
             this.controller.output.appendLine(`Session ${this.session.id} started`);
             this.post({ type: 'session', device, capabilities: this.session.capabilities });
         } finally {
@@ -431,8 +445,14 @@ export class InspectorPanel {
                 + 'For a device on Wi-Fi only, turn on testflyAppiumInspector.ios.preferDevicectl and restart Appium (simulator sessions need it off).';
         }
         if (/RemoteXPC tunnel/.test(message) && this.lastDevice?.platform === 'ios' && this.lastDevice.kind === 'simulator') {
-            message += ' Appium took this simulator for a real device. That happens when the server runs with APPIUM_XCUITEST_PREFER_DEVICECTL=1: '
-                + 'turn off testflyAppiumInspector.ios.preferDevicectl (or start Appium without that variable) and restart Appium.';
+            message += ' Appium took this simulator for a real device: the running server was started with APPIUM_XCUITEST_PREFER_DEVICECTL=1 '
+                + '(an older server, e.g. from before this extension\'s 0.3.1). Restart Appium to get a clean server.';
+            this.offerRestart('Appium took the simulator for a real device: the server still runs with an old setting.');
+        }
+        if (/UiAutomation not connected/i.test(message)) {
+            message += ' Another UiAutomation client still holds the emulator (an earlier UiAutomator2 server, or another inspector such as one based on mobilecli). '
+                + 'Close the other tool, or restart Appium, then start the session again.';
+            this.offerRestart('UiAutomation is held by another client on the device.');
         }
         if (e instanceof AppiumError && e.stacktrace) {
             this.controller.output.appendLine(e.stacktrace);
@@ -443,6 +463,14 @@ export class InspectorPanel {
         }
         this.controller.output.appendLine(`Error: ${message}`);
         this.post({ type: 'error', message });
+    }
+
+    private offerRestart(reason: string) {
+        void vscode.window.showErrorMessage(reason, 'Restart Appium').then(async choice => {
+            if (choice) {
+                await this.controller.restart();
+            }
+        });
     }
 
     private dispose() {
