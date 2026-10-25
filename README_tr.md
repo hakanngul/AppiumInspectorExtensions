@@ -5,7 +5,7 @@
 Appium 3 için bir VS Code uzantısı: Appium sunucusunu başlatın ve durdurun, yüklü sürücüleri ve bütün Android ve iOS
 cihazları tek yerde görün ve native uygulama ekranlarını, hazır Appium java-client locator'larıyla inceleyin.
 
-> **Durum: 0.1.0, ilk deneme sürümü.** Aşağıdakilerin hepsi yazıldı; sahte Appium sunucularıyla ve gerçek Appium 3.8.0
+> **Durum: 0.2.0, deneme sürümü.** Aşağıdakilerin hepsi yazıldı; sahte Appium sunucularıyla ve gerçek Appium 3.8.0
 > başlat/durdur ile test edildi. Gerçek emülatör, simülatör ve cihazlarda oturum henüz bunlara sahip bir makinede
 > denenmedi. Bkz. [PLAN.md](PLAN.md).
 
@@ -24,6 +24,9 @@ cihazları tek yerde görün ve native uygulama ekranlarını, hazır Appium jav
     (`.apk`, `.app`, `.ipa`) ya da uygulamasız, o anki ekran. Capabilities canlı önizlenir; gelişmiş JSON capabilities ve
     kayıtlı profiller desteklenir. Uygulama yeniden kurulmaz ve sıfırlanmaz (`noReset`), oturum bitince açık kalır
     (`shouldTerminateApp: false`).
+  - **Yüklü uygulamalar:** Seçilen cihazdaki uygulamalar kendiliğinden okunur (`adb shell pm list packages -3`,
+    `xcrun simctl listapps`, `xcrun devicectl device info apps`) ve paket / bundle id alanında liste olarak sunulur;
+    cihazda size ait tek uygulama varsa alan doldurulur. Android'de açılış aktivitesi, aktivite alanında ipucu olarak görünür.
   - **Ekran ve ağaç:** Element çerçeveli ekran görüntüsü, UI ağacı, ham XML'li Page Source sekmesi, element öznitelikleri.
   - **Eylemler:** Tap, long press, yazı, swipe, back (Android) ve home; W3C actions ile, yedek olarak `mobile:` komutları.
   - **Locator'lar:** id, accessibility id, UiAutomator, iOS predicate, iOS class chain, class name ve XPath; o anki ekranda
@@ -44,7 +47,7 @@ cihazları tek yerde görün ve native uygulama ekranlarını, hazır Appium jav
 ## Kurulum
 
 ```bash
-code --install-extension testfly-appium-inspector-0.1.0.vsix
+code --install-extension testfly-appium-inspector-0.2.0.vsix
 ```
 
 Ya da VS Code'da: Extensions görünümü > `...` > *Install from VSIX...*. Sonra etkinlik çubuğundan **TestFly Appium**

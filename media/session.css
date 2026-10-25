@@ -25,6 +25,7 @@
 .setup input:focus, .setup textarea:focus, .setup select:focus { outline: none; border-color: var(--accent); }
 .field-note { font-size: 11.5px; color: var(--muted); margin: 5px 0 0; }
 .field-note code { font: 11px var(--mono); }
+.field-note.error-note { color: var(--warn); }
 .wide-seg { display: flex; width: 100%; }
 .wide-seg button { flex: 1; justify-content: center; }
 .file-row { display: flex; gap: 6px; }

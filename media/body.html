@@ -84,15 +84,17 @@
 
       <div class="app-fields" id="fieldsInstalled">
         <div class="android-only">
-          <label class="lbl" for="appPackage">App package</label>
-          <input id="appPackage" type="text" spellcheck="false" placeholder="com.example.app">
+          <label class="lbl" for="appPackage">App package <span class="lbl-actions"><button type="button" class="link apps-reload">Reload apps</button></span></label>
+          <input id="appPackage" type="text" spellcheck="false" placeholder="com.example.app" list="installedApps" autocomplete="off">
           <label class="lbl" for="appActivity">App activity <span class="muted">optional</span></label>
           <input id="appActivity" type="text" spellcheck="false" placeholder=".MainActivity">
         </div>
         <div class="ios-only">
-          <label class="lbl" for="bundleId">Bundle id</label>
-          <input id="bundleId" type="text" spellcheck="false" placeholder="com.example.app">
+          <label class="lbl" for="bundleId">Bundle id <span class="lbl-actions"><button type="button" class="link apps-reload">Reload apps</button></span></label>
+          <input id="bundleId" type="text" spellcheck="false" placeholder="com.example.app" list="installedApps" autocomplete="off">
         </div>
+        <datalist id="installedApps"></datalist>
+        <p class="field-note" id="appsNote"></p>
       </div>
       <div class="app-fields" id="fieldsFile" hidden>
         <label class="lbl" for="appPath">App file <span class="muted" id="appFileHint">.apk</span></label>

@@ -72,10 +72,27 @@ async function run(browser, platform) {
     const device = devices.find(d => d.platform === platform);
     await host({ type: 'chooseDevice', id: device.id });
     await settle();
+    // the form asks the host for the device's apps and offers them in the field's list
+    const listApps = (await sent()).filter(m => m.type === 'listApps').pop();
+    assert.strictEqual(listApps && listApps.deviceId, device.id, 'apps requested for the chosen device');
     if (platform === 'android') {
+        await host({ type: 'apps', deviceId: device.id, apps: [{ id: 'com.example.shop' }, { id: 'com.starlettech.letsbet.stage' }] });
+        await settle();
+        assert.deepStrictEqual(await p.$$eval('#installedApps option', o => o.map(x => x.value)), ['com.example.shop', 'com.starlettech.letsbet.stage']);
+        assert.match(await p.textContent('#appsNote'), /2 apps installed on Pixel 8 API 35/);
+        assert.strictEqual(await p.inputValue('#appPackage'), '', 'two apps: nothing is chosen for the user');
         await p.fill('#appPackage', 'com.example.shop');
+        await settle();
+        const resolve = (await sent()).filter(m => m.type === 'resolveActivity').pop();
+        assert.strictEqual(resolve.package, 'com.example.shop');
+        await host({ type: 'activity', deviceId: device.id, package: 'com.example.shop', activity: '.MainActivity' });
+        await settle();
+        assert.match(await p.getAttribute('#appActivity', 'placeholder'), /^\.MainActivity/);
     } else {
-        await p.fill('#bundleId', 'com.example.shop');
+        await host({ type: 'apps', deviceId: device.id, apps: [{ id: 'com.example.shop', name: 'Shop', system: false }, { id: 'com.apple.Preferences', name: 'Settings', system: true }] });
+        await settle();
+        assert.strictEqual(await p.inputValue('#bundleId'), 'com.example.shop', 'the only app of the user is filled in');
+        assert.match(await p.textContent('#appsNote'), /1 app installed on iPhone 17 \(\+1 system\)/);
     }
     await p.waitForTimeout(300);
     const preview = (await sent()).filter(m => m.type === 'preview').pop();

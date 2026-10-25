@@ -1,0 +1,5 @@
+package:com.starlettech.letsbet.stage
+package:com.example.shop
+package:io.appium.settings
+package:io.appium.uiautomator2.server
+package:io.appium.uiautomator2.server.test

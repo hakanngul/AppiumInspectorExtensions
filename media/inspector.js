@@ -38,6 +38,7 @@
         screen: null, window: null, selected: null, hovered: null, expanded: new Set(saved.expanded || []),
         mode: saved.mode || 'inspect', tab: 'tree', verified: new Map(),
         steps: [], fields: [], used: new Set(),
+        apps: { deviceId: '', list: [], loading: false, error: '' },
         find: { using: saved.findUsing || 'xpath', query: '', matches: [], set: new Set(), current: -1, error: '', unknown: false },
     };
 
@@ -51,6 +52,8 @@
             case 'profiles': return onProfiles(m.profiles, m.selected);
             case 'chooseDevice': state.form.deviceId = m.id; return renderSetup(true);
             case 'preview': return onPreview(m);
+            case 'apps': return onApps(m);
+            case 'activity': return onActivity(m);
             case 'appPicked': $('appPath').value = m.path; readForm(); return requestPreview();
             case 'session': return onSession(m);
             case 'sessionEnded': return onSessionEnded(m.message);
@@ -166,7 +169,82 @@
         $('appFileHint').textContent = platform === 'android' ? '.apk' : d && d.kind === 'real' ? '.ipa or device .app' : 'simulator .app or .zip';
         $('reloadDevices').textContent = state.env.devicesLoading ? 'Loading…' : 'Reload';
         if (force) writeForm();
+        requestApps(false);
         requestPreview();
+    }
+
+    // ── installed apps (pm list packages / simctl listapps / devicectl) ──
+    function requestApps(force) {
+        const d = currentDevice();
+        const a = state.apps;
+        if (!d || d.state !== 'ready') {
+            if (a.deviceId !== (d ? d.id : '')) {
+                state.apps = { deviceId: d ? d.id : '', list: [], loading: false, error: d ? 'Boot the device to list its apps.' : '' };
+                renderApps();
+            }
+            return;
+        }
+        if (!force && a.deviceId === d.id && (a.loading || a.list.length || a.error)) return;
+        state.apps = { deviceId: d.id, list: [], loading: true, error: '' };
+        renderApps();
+        send({ type: 'listApps', deviceId: d.id, force: !!force });
+    }
+
+    function onApps(m) {
+        if (m.deviceId !== state.form.deviceId) return;
+        state.apps = { deviceId: m.deviceId, list: m.apps || [], loading: false, error: m.error || '' };
+        // One app of the user's own on the device: that is the one to inspect.
+        const own = state.apps.list.filter(a => !a.system);
+        const d = currentDevice();
+        const field = d && d.platform === 'ios' ? $('bundleId') : $('appPackage');
+        if (own.length === 1 && !field.value.trim()) {
+            field.value = own[0].id;
+            readForm();
+            requestPreview();
+        }
+        renderApps();
+        resolveActivity();
+    }
+
+    function renderApps() {
+        const a = state.apps;
+        const list = $('installedApps');
+        list.innerHTML = '';
+        for (const app of a.list) {
+            const o = document.createElement('option');
+            o.value = app.id;
+            o.label = [app.name, app.system ? 'system' : ''].filter(Boolean).join(' · ');
+            list.append(o);
+        }
+        const d = currentDevice();
+        const own = a.list.filter(x => !x.system).length;
+        $('appsNote').textContent = a.loading ? 'Reading the apps on the device…'
+            : a.error ? a.error
+                : a.list.length ? `${own} app${own === 1 ? '' : 's'} installed on ${d ? d.name : 'the device'}${a.list.length > own ? ` (+${a.list.length - own} system)` : ''}: pick one from the field's list or type it.`
+                    : d && d.state === 'ready' ? 'No installed apps found; type the id.' : '';
+        $('appsNote').classList.toggle('error-note', !!a.error);
+        document.querySelectorAll('.apps-reload').forEach(b => { b.disabled = a.loading || !d || d.state !== 'ready'; });
+    }
+
+    let lastResolved = '';
+    /** Android: shows the package's launcher activity as the hint of the activity field; Appium finds it the same way. */
+    function resolveActivity() {
+        const d = currentDevice();
+        const pkg = $('appPackage').value.trim();
+        if (!d || d.platform !== 'android' || !state.apps.list.some(a => a.id === pkg)) {
+            $('appActivity').placeholder = '.MainActivity';
+            lastResolved = '';
+            return;
+        }
+        if (lastResolved === d.id + '/' + pkg) return;
+        lastResolved = d.id + '/' + pkg;
+        send({ type: 'resolveActivity', deviceId: d.id, package: pkg });
+    }
+
+    function onActivity(m) {
+        if (m.deviceId !== state.form.deviceId || m.package !== $('appPackage').value.trim()) return;
+        $('appActivity').placeholder = m.activity ? `${m.activity}  (auto)` : 'No launcher activity found';
+        $('appActivity').title = m.activity ? 'Launcher activity found on the device; Appium starts it when this field is empty.' : '';
     }
 
     function writeForm() {
@@ -256,6 +334,9 @@
         requestPreview();
     }));
     ['appPackage', 'appActivity', 'bundleId', 'appPath', 'extra'].forEach(id => $(id).addEventListener('input', () => { readForm(); requestPreview(); }));
+    $('appPackage').addEventListener('change', resolveActivity);
+    $('appPackage').addEventListener('input', resolveActivity);
+    document.querySelectorAll('.apps-reload').forEach(b => b.addEventListener('click', () => requestApps(true)));
     $('browseApp').addEventListener('click', () => {
         const d = currentDevice();
         send({ type: 'pickApp', platform: d ? d.platform : 'android', kind: d ? d.kind : 'emulator' });
