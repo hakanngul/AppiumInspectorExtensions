@@ -153,6 +153,9 @@ test('form, session, screen, tap, verify and end through the panel', async () =>
         const created = calls.find(c => c.method === 'POST' && c.url === '/session').body.capabilities.alwaysMatch;
         assert.strictEqual(created['appium:udid'], 'emulator-5554');
         assert.strictEqual(created['appium:noReset'], true);
+        assert.deepStrictEqual(created['appium:settings'], { waitForIdleTimeout: 300 }, 'fast start is on by default');
+        assert.ok(!('appium:skipDeviceInitialization' in created), 'first session on the device sets it up');
+        assert.ok(controller.isInitialized('emulator-5554'), 'later sessions skip the setup');
         const screen = posted.find(m => m.type === 'screen');
         assert.strictEqual(screen.source, SOURCE);
         assert.ok(posted.findIndex(m => m.type === 'shot') < posted.findIndex(m => m.type === 'screen'), 'the picture comes first');

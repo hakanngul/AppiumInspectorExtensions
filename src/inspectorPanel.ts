@@ -273,6 +273,7 @@ export class InspectorPanel {
             device,
             app,
             extra: extraCaps,
+            fast: cfg.get('session.fastStart', true) ? { deviceInitialized: this.controller.isInitialized(device.id) } : undefined,
             signing: {
                 xcodeOrgId: cfg.get('ios.xcodeOrgId', ''),
                 xcodeSigningId: cfg.get('ios.xcodeSigningId', 'Apple Development'),
@@ -330,6 +331,7 @@ export class InspectorPanel {
             const open = () => vscode.window.withProgress(
                 { location: vscode.ProgressLocation.Notification, title: `Appium: starting a session on ${device.name}…`, cancellable: false },
                 () => this.controller.newSession(device, prepared.capabilities!));
+            const created = Date.now();
             try {
                 this.session = await open();
             } catch (e) {
@@ -343,7 +345,8 @@ export class InspectorPanel {
                 await resetUiAutomation(vscode.workspace.getConfiguration(SECTION).get('adbPath', ''), device.id);
                 this.session = await open();
             }
-            this.controller.output.appendLine(`Session ${this.session.id} started`);
+            this.controller.output.appendLine(`Session ${this.session.id} started in ${seconds(Date.now() - created)}`);
+            this.controller.markInitialized(device.id);
             this.post({ type: 'session', device, capabilities: this.session.capabilities });
         } finally {
             this.busy = false;
@@ -420,6 +423,8 @@ export class InspectorPanel {
         const s = this.requireSession();
         this.status('loading', `Reading ${s.device.name}…`);
         const capture = await s.capture(shot => this.post({ type: 'shot', screenshot: shot }));
+        const t = capture.timings;
+        this.controller.output.appendLine(`Screen read in ${seconds(capture.ms)}: screenshot ${seconds(t.screenshot)}, window ${seconds(t.window)}, page source ${seconds(t.source)}`);
         this.post({ type: 'screen', ...capture });
     }
 
@@ -488,4 +493,8 @@ export function sameActivity(a: string, b: string, pkg: string): boolean {
         return name.startsWith('.') ? pkg + name : name;
     };
     return full(a) === full(b);
+}
+
+function seconds(ms: number): string {
+    return `${(ms / 1000).toFixed(1)} s`;
 }

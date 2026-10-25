@@ -95,3 +95,26 @@ test('sanitizeXml drops what XML 1.0 forbids and keeps the rest', () => {
     assert.strictEqual(sanitizeXml(xml), '<a text="ok   &#10; &#x41; \uD83D\uDE00 "/>');
     assert.strictEqual(sanitizeXml('<hierarchy>\n\t<node/>\r\n</hierarchy>'), '<hierarchy>\n\t<node/>\r\n</hierarchy>');
 });
+
+test('fast start: no log capture, short idle waits, device setup skipped once Appium did it', () => {
+    const { fastStartCapabilities } = require('../out/appium/capabilities.js');
+    const first = buildCapabilities({ device: emulator, app: { kind: 'none' }, fast: {} });
+    assert.strictEqual(first['appium:skipLogcatCapture'], true);
+    assert.strictEqual(first['appium:disableWindowAnimation'], true);
+    assert.deepStrictEqual(first['appium:settings'], { waitForIdleTimeout: 300 });
+    assert.ok(!('appium:skipDeviceInitialization' in first), 'the first session sets the device up');
+    assert.strictEqual(buildCapabilities({ device: emulator, app: { kind: 'none' }, fast: { deviceInitialized: true } })['appium:skipDeviceInitialization'], true);
+    assert.deepStrictEqual(fastStartCapabilities(simulator), { 'appium:skipLogCapture': true, 'appium:waitForIdleTimeout': 1 });
+    assert.ok(!('appium:skipLogcatCapture' in buildCapabilities({ device: emulator, app: { kind: 'none' } })), 'off: nothing added');
+});
+
+test('the advanced JSON wins over fast start; settings objects are merged', () => {
+    const caps = buildCapabilities({
+        device: emulator, app: { kind: 'none' }, fast: {},
+        extra: { disableWindowAnimation: false, settings: { waitForIdleTimeout: 0, ignoreUnimportantViews: true } },
+    });
+    assert.strictEqual(caps['appium:disableWindowAnimation'], false);
+    assert.deepStrictEqual(caps['appium:settings'], { waitForIdleTimeout: 0, ignoreUnimportantViews: true });
+    const ios = buildCapabilities({ device: simulator, app: { kind: 'none' }, fast: {}, extra: { 'appium:waitForIdleTimeout': 10 } });
+    assert.strictEqual(ios['appium:waitForIdleTimeout'], 10);
+});

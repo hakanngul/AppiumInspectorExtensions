@@ -17,6 +17,28 @@ export interface CapabilityInput {
     signing?: IosSigning;
     /** The "Advanced capabilities (JSON)" editor; wins over the generated values. */
     extra?: Record<string, unknown>;
+    /** Fast start: skip what an inspector session does not need. `deviceInitialized`: Appium set this device up already. */
+    fast?: { deviceInitialized?: boolean };
+}
+
+/**
+ * Capabilities that make a session start and respond faster, from the drivers' own advice: no log capture, no repeated
+ * device setup, and short idle waits. UiAutomator2 waits up to 10 s for the UI to go idle before every source read and
+ * action (`waitForIdleTimeout`), which an app with running animations never does; XCUITest has the same wait on iOS.
+ */
+export function fastStartCapabilities(device: DeviceInfo, deviceInitialized = false): Record<string, unknown> {
+    if (device.platform === 'android') {
+        return {
+            'appium:skipLogcatCapture': true,
+            'appium:disableWindowAnimation': true,
+            ...(deviceInitialized ? { 'appium:skipDeviceInitialization': true } : {}),
+            'appium:settings': { waitForIdleTimeout: 300 },
+        };
+    }
+    return {
+        'appium:skipLogCapture': true,
+        'appium:waitForIdleTimeout': 1,
+    };
 }
 
 /** Capabilities the W3C spec defines; every other capability needs a vendor prefix. */
@@ -64,8 +86,17 @@ export function buildCapabilities(input: CapabilityInput): Record<string, unknow
         setIf(caps, 'appium:updatedWDABundleId', s.updatedWDABundleId);
     }
 
+    if (input.fast) {
+        Object.assign(caps, fastStartCapabilities(device, input.fast.deviceInitialized));
+    }
+
     for (const [name, value] of Object.entries(input.extra ?? {})) {
         const key = prefixed(name);
+        const current = caps[key];
+        if (key === 'appium:settings' && isObject(value) && isObject(current)) {
+            caps[key] = { ...current, ...value }; // settings from the editor add to the fast-start ones
+            continue;
+        }
         if (value === null) {
             delete caps[key]; // null in the editor removes a generated capability
         } else {
@@ -132,4 +163,8 @@ function setIf(caps: Record<string, unknown>, key: string, value: string | undef
     if (value?.trim()) {
         caps[key] = value.trim();
     }
+}
+
+function isObject(v: unknown): v is Record<string, unknown> {
+    return !!v && typeof v === 'object' && !Array.isArray(v);
 }

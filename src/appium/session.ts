@@ -11,6 +11,8 @@ export interface Capture {
     /** Window size in the driver's coordinate unit: pixels on Android, points on iOS. */
     window: Rect;
     ms: number;
+    /** Milliseconds per step, for the log. */
+    timings: { screenshot: number; window: number; source: number };
 }
 
 export interface Locator {
@@ -58,10 +60,13 @@ export class InspectorSession {
         return this.run(async () => {
             const started = Date.now();
             const screenshot = await this.client.screenshot(this.id);
+            const t1 = Date.now();
             onShot(screenshot);
             this.window = await this.client.windowRect(this.id);
+            const t2 = Date.now();
             const source = sanitizeXml(await this.client.source(this.id));
-            return { screenshot, source, window: this.window, ms: Date.now() - started };
+            const t3 = Date.now();
+            return { screenshot, source, window: this.window, ms: t3 - started, timings: { screenshot: t1 - started, window: t2 - t1, source: t3 - t2 } };
         });
     }
 
