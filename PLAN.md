@@ -153,7 +153,6 @@ media/
   browser.js, page-agent.js      Selenium locator önerileri
 test/
   fixtures/               gerçek page source ve komut çıktıları (android.xml, ios.xml, adb.txt, simctl.json, ...)
-  java/                   üretilen kodun derlendiğini kanıtlayan küçük Maven projesi (Bölüm 17)
   *.test.js
 ```
 
@@ -552,8 +551,8 @@ public class RecordedPage {
 - **Alan çıktısı:** `@FindBy(…) private WebElement signIn;` ve sınıf iskeletinde `PageFactory.initElements(driver, this);`
   (`org.openqa.selenium.support.PageFactory`, `selenium-java` 4.x). `codegen.style = by` seçilirse
   `private static final By SIGN_IN = By.id("…");` üretilir.
-- Selenium 4.x'te `@FindBy`, `By.*`, `getShadowRoot()` ve `switchTo().frame()` bulunur, dolayısıyla çıktı her 4.x sürümünde
-  derlenir. Bu, Faz 5'te 4.0.0 ve 4.51.0 ile derlenerek **doğrulanacak**.
+- Selenium 4.x'te `@FindBy`, `By.*`, `getShadowRoot()` ve `switchTo().frame()` bulunur; çıktı yalnızca bu API'leri
+  kullanır.
 - **Silinecek testler:** `test/browser.test.js` ve `test/selectors.test.js` içinde TestFly monorepo dosyalarını okuyan
   "mirror" testleri kaldırılır.
 - Tarayıcıyı WebDriver ile sürmek kapsam **dışıdır**.
@@ -638,7 +637,7 @@ ayarlar taşınmaz; README bunu belirtir.
 **Kaldırılanlar:** `serverUrl` (mobilecli), `mobilecliPath`, `autoStartServer`.
 
 **Küçük düzeltme:** `.vscodeignore` dosyasındaki `LICENSE.txt` satırı kaldırılır, çünkü gerçek dosya adı `LICENSE` ve
-paketlenmesi gerekir. `test/java/**` satırı eklenir.
+paketlenmesi gerekir.
 
 ## 16. Fazlar ve kabul ölçütleri
 
@@ -681,15 +680,16 @@ bir commit ile `AppiumInspectorExtensions` deposuna gider.
 
 - `media/locators.js`, `media/codegen.js`, Verify, alan adı üretimi, Record sınıfı.
 - **Kabul:**
-  - Üretilen kod `test/java` Maven projesinde **hem** java-client 11.0.0 **hem** 10.1.1 ile `mvn -q compile`'dan geçer.
+  - `codegen.js` testleri yeşil: üretilen alanlar, import'lar ve Record sınıfı beklenen metinle birebir aynı.
+  - Kullanıcı üretilen bir sınıfı kendi Appium projesine bir kez yapıştırıp derler (elle, tek seferlik kontrol).
   - En az bir Android ve bir iOS ekranı için önerilen locator'lar cihazda `findElements` ile doğrulanır; yerel sayımla
     sunucu sayısı uyuşur.
 
 ### Faz 5: Browser'dan Selenium'a
 
 - `page-agent.js` locator'ları, `browser.js` çıktısı, iframe ve shadow DOM çıktısı, TestFly'a bağlı testlerin temizliği.
-- **Kabul:** `npm test` (tarayıcı testi dahil) yeşil. Üretilen `@FindBy` ve `By` kodu `test/java` içinde Selenium 4.0.0 ve
-  4.51.0 ile derlenir. Örnek bir sayfada (`test/fixtures/page.html`) elementi bulur.
+- **Kabul:** `npm test` (tarayıcı testi dahil) yeşil. Önerilen locator'lar örnek bir sayfada (`test/fixtures/page.html`)
+  sayfanın kendisinde doğru elementi bulur.
 - Bu faz mobil fazlardan bağımsızdır; istenirse Faz 1'den önce yapılabilir.
 
 ### Faz 6: Yeniden adlandırma ve paketleme
@@ -714,7 +714,6 @@ Uzak sunucu ve bulut sağlayıcılar, çalışan bir oturuma bağlanma, iki plat
 | `gestures.ts` | Sahte sunucu | W3C Actions gövdesi; `/appium/extensions` sonucuna göre yedek komut seçimi |
 | `locators.js` | `node:test` ve `test/xml.js` okuyucusu | Öneri sırası, yerel sayım, kaçış, basit predicate/class chain/UiSelector sayımı |
 | `codegen.js` | `node:test`, metin karşılaştırması | İki java-client hedefi, iki stil, alan adı üretimi, Record, import'lar |
-| Java derleme | `test/java` Maven projesi (`mvn -q compile`, profiller: `jc11`, `jc10`, `sel40`, `sel451`) | Üretilen kodun derlendiğini kanıtlar; elle çalışır (CI yok), `npm test`'in parçası değildir |
 | Webview | `test/preview.js` (Playwright, sahte host ve fixture XML) | Ağaç, overlay, XPath sayımı, finder |
 | Uçtan uca | Elle: emülatör ve simülatör | Yalnızca burada kanıtlanan şey "doğrulandı" diye raporlanır |
 
@@ -726,7 +725,7 @@ Uzak sunucu ve bulut sağlayıcılar, çalışan bir oturuma bağlanma, iki plat
 | İlk iOS oturumunda WDA derlemesi | Oturum dakikalarca açılmaz | 300 sn zaman aşımı, sunucu logunun son satırını gösterme |
 | Point ile piksel farkı, yatay ekran, notch | Overlay kayar | Yüzdelik yerleştirme, en-boy oranı uyarısı |
 | Sürücü sürümünde komut farkı | Hareket çalışmaz | W3C Actions birincil; `/appium/extensions` ile yetenek algılama; açık hata |
-| java-client 10 ile 11 arasındaki farklar | Üretilen kod derlenmez | `codegen.javaClient` ayarı, iki hedefe karşı derleme testi |
+| java-client 10 ile 11 arasındaki farklar | Üretilen kod derlenmez | `codegen.javaClient` ayarı, iki hedef için ayrı `codegen.js` testleri |
 | Gerçek iOS: WDA imzalama, UDID eşleşmesi | Oturum açılmaz | Ayarlar ve yönergeli hata; **bu makinede test edilemez** |
 | UiAutomator, predicate ve class chain yerelde sayılamaz | Yanlış güven | "?" gösterme, Verify ile sunucuda kesinleştirme |
 | Bozuk XML | Ağaç gelmez | Karakter temizleme, ham XML'i gösterme |
@@ -755,8 +754,9 @@ Uzak sunucu ve bulut sağlayıcılar, çalışan bir oturuma bağlanma, iki plat
 - `mobile: type` ve `mobile: keys` ile odaktaki alana yazma.
 - iOS point/piksel ölçeği ve Android yatay ekran.
 
-**Faz 4 ve 5'te derlenerek doğrulanacak:** Üretilen Java'nın java-client 11.0.0 ve 10.1.1 ile, Selenium 4.0.0 ve 4.51.0 ile
-derlenmesi. Bundan önce "derlenir" denmeyecek.
+**Faz 4'te kullanıcının projesinde doğrulanacak:** Üretilen bir sınıfın kullanıcının kendi Appium/Selenium projesinde
+derlenmesi. Uzantı Java derlemez; Bölüm 3'teki import ve annotation bilgileri jar'lardan doğrulandı ve `codegen.js`
+testleri bu bilgilere karşı yazılır.
 
 **Doğrulanamayacak:**
 
@@ -778,7 +778,7 @@ derlenmesi. Bundan önce "derlenir" denmeyecek.
 7. Tarayıcıyı Selenium ile sürmek kapsam dışı; yalnızca çıktı Selenium.
 
 8. Windows'ta Android, kullanıcının Windows makinesinde Faz 2'de elle doğrulanır.
-9. `test/java` derleme kontrolü CI'a bağlanmaz; Faz 4 ve 5'te elle çalıştırılır (`mvn -q compile`).
+9. Uzantı deposunda Java, Maven ya da CI yoktur. Üretilen Java metni `node:test` ile doğrulanır.
 
 **Açık kalan kararlar:**
 
