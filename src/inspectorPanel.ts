@@ -59,6 +59,8 @@ export class InspectorPanel {
     /** Launcher activities per device and package (`-a MAIN -c LAUNCHER`), read once per panel. */
     private readonly launchers = new Map<string, Promise<string | undefined>>();
     private previewSeq = 0;
+    /** The device of the last session start, to explain driver errors. */
+    private lastDevice?: DeviceInfo;
     private readonly subscriptions: vscode.Disposable[] = [];
 
     static show(context: vscode.ExtensionContext, controller: AppiumController, deviceId?: string) {
@@ -321,6 +323,7 @@ export class InspectorPanel {
                 }
             }
             const device = prepared.device;
+            this.lastDevice = device;
             this.status('loading', `Starting a session on ${device.name}…${device.platform === 'ios' ? ' The first iOS session builds WebDriverAgent and can take minutes.' : ''}`);
             this.controller.output.appendLine(`New session on ${device.name}: ${JSON.stringify(prepared.capabilities)}`);
             this.session = await vscode.window.withProgress(
@@ -424,9 +427,12 @@ export class InspectorPanel {
             message += ' The Ports list in the TestFly Appium view shows which process holds it and can stop it.';
         }
         if (/Unknown device or simulator UDID/.test(message)) {
-            message += this.controller.current.server.state === 'external'
-                ? ' The Appium server was started outside VS Code: start it with APPIUM_XCUITEST_PREFER_DEVICECTL=1, or stop it and press Start Appium here. Connect the iPhone with a cable.'
-                : ' Connect the iPhone with a cable, unlock it and trust this Mac. If the server was started before this setting, stop and start Appium again.';
+            message += ' Connect the iPhone with a cable, unlock it and trust this Mac: Appium finds real devices over USB. '
+                + 'For a device on Wi-Fi only, turn on testflyAppiumInspector.ios.preferDevicectl and restart Appium (simulator sessions need it off).';
+        }
+        if (/RemoteXPC tunnel/.test(message) && this.lastDevice?.platform === 'ios' && this.lastDevice.kind === 'simulator') {
+            message += ' Appium took this simulator for a real device. That happens when the server runs with APPIUM_XCUITEST_PREFER_DEVICECTL=1: '
+                + 'turn off testflyAppiumInspector.ios.preferDevicectl (or start Appium without that variable) and restart Appium.';
         }
         if (e instanceof AppiumError && e.stacktrace) {
             this.controller.output.appendLine(e.stacktrace);

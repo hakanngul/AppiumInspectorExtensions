@@ -5,7 +5,7 @@
 A VS Code extension for Appium 3: start and stop the Appium server, see the installed drivers and every Android and iOS
 device in one place, and inspect native app screens with ready-to-paste Appium java-client locators.
 
-> **Status: 0.3.0, test release.** Everything below is built and covered by tests against fake Appium servers and
+> **Status: 0.3.1, test release.** Everything below is built and covered by tests against fake Appium servers and
 > a real Appium 3.8.0 server start/stop; sessions on real emulators, simulators and devices still need a first run on a
 > machine that has them. See [PLAN.md](PLAN.md).
 
@@ -51,7 +51,7 @@ The generated classes were compiled with `javac` against java-client 11.0.0 and 
 ## Install
 
 ```bash
-code --install-extension testfly-appium-inspector-0.3.0.vsix
+code --install-extension testfly-appium-inspector-0.3.1.vsix
 ```
 
 Or in VS Code: Extensions view > `...` > *Install from VSIX...*. Then open the **TestFly Appium** view in the activity
@@ -96,7 +96,7 @@ signature lasts 7 days.
 | `testflyAppiumInspector.appium.autoStart` | `false` | Start the server when the view opens |
 | `testflyAppiumInspector.adbPath` | (empty) | adb; empty: `ANDROID_HOME`, `ANDROID_SDK_ROOT` or PATH |
 | `testflyAppiumInspector.ios.*` | | Real iOS device signing, see above |
-| `testflyAppiumInspector.ios.preferDevicectl` | `true` | Start Appium with `APPIUM_XCUITEST_PREFER_DEVICECTL=1`, so XCUITest finds real iPhones the way this extension lists them |
+| `testflyAppiumInspector.ios.preferDevicectl` | `false` | Start Appium with `APPIUM_XCUITEST_PREFER_DEVICECTL=1`, for a real iPhone that Appium does not find over USB (Wi-Fi). Simulator sessions fail on such a server |
 | `testflyAppiumInspector.autoRefreshAfterAction` | `true` | Read the screen again after an action |
 | `testflyAppiumInspector.codegen.javaClient` | `11` | `11` or `9-10`, see Java output |
 | `testflyAppiumInspector.codegen.style` | `pageFactory` | `pageFactory` or `appiumBy` |

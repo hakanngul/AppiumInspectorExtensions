@@ -2,7 +2,7 @@
   "name": "testfly-appium-inspector",
   "displayName": "TestFly - Appium Inspector",
   "description": "Start and stop an Appium 3 server, list Android and iOS devices, and inspect native app screens with ready-to-paste Appium java-client locators.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "publisher": "hakanngul",
   "license": "Apache-2.0",
   "repository": {
@@ -150,8 +150,8 @@
         },
         "testflyAppiumInspector.ios.preferDevicectl": {
           "type": "boolean",
-          "default": true,
-          "description": "Start Appium with APPIUM_XCUITEST_PREFER_DEVICECTL=1, so that the XCUITest driver finds real iOS devices with devicectl, as this extension lists them. Takes effect when the extension starts the server."
+          "default": false,
+          "markdownDescription": "Start Appium with `APPIUM_XCUITEST_PREFER_DEVICECTL=1`: XCUITest then finds real iOS devices with devicectl, also one that is not reachable over USB (Wi-Fi). **Simulator sessions fail on that server** (XCUITest takes the simulators devicectl lists for real devices), so turn it on only for a real device that Appium reports as an unknown UDID. Takes effect when the extension starts the server."
         }
       }
     },

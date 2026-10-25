@@ -37,6 +37,16 @@ export class AppiumController implements vscode.Disposable {
         this.server = this.createServer();
         this.state = { server: this.server.current, busy: false, devices: [], deviceNotes: [], devicesLoading: false, platform: process.platform, ports: [] };
         this.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration(`${SECTION}.ios.preferDevicectl`) && this.server.owned) {
+                void vscode.window.showInformationMessage('Restart Appium to apply testflyAppiumInspector.ios.preferDevicectl.', 'Restart Appium').then(async choice => {
+                    if (choice) {
+                        await this.stop();
+                        this.server = this.createServer();
+                        this.update({ server: this.server.current });
+                        await this.start();
+                    }
+                });
+            }
             if (e.affectsConfiguration(`${SECTION}.appium`)) {
                 void this.applyServerSettings();
             }
@@ -69,7 +79,8 @@ export class AppiumController implements vscode.Disposable {
             allowCors: cfg.get('appium.allowCors', true),
             // XCUITest finds real iPhones through usbmux or the iOS 18+ tunnel registry by default; this extension lists
             // them with devicectl. The driver's own switch makes it use devicectl too, so both see the same devices.
-            env: cfg.get('ios.preferDevicectl', true) ? { APPIUM_XCUITEST_PREFER_DEVICECTL: '1' } : {},
+            // Off by default: with it, XCUITest also takes the simulators devicectl lists for real devices.
+            env: cfg.get('ios.preferDevicectl', false) ? { APPIUM_XCUITEST_PREFER_DEVICECTL: '1' } : {},
         };
     }
 

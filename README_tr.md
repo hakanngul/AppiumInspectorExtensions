@@ -5,7 +5,7 @@
 Appium 3 için bir VS Code uzantısı: Appium sunucusunu başlatın ve durdurun, yüklü sürücüleri ve bütün Android ve iOS
 cihazları tek yerde görün ve native uygulama ekranlarını, hazır Appium java-client locator'larıyla inceleyin.
 
-> **Durum: 0.3.0, deneme sürümü.** Aşağıdakilerin hepsi yazıldı; sahte Appium sunucularıyla ve gerçek Appium 3.8.0
+> **Durum: 0.3.1, deneme sürümü.** Aşağıdakilerin hepsi yazıldı; sahte Appium sunucularıyla ve gerçek Appium 3.8.0
 > başlat/durdur ile test edildi. Gerçek emülatör, simülatör ve cihazlarda oturum henüz bunlara sahip bir makinede
 > denenmedi. Bkz. [PLAN.md](PLAN.md).
 
@@ -51,7 +51,7 @@ cihazları tek yerde görün ve native uygulama ekranlarını, hazır Appium jav
 ## Kurulum
 
 ```bash
-code --install-extension testfly-appium-inspector-0.3.0.vsix
+code --install-extension testfly-appium-inspector-0.3.1.vsix
 ```
 
 Ya da VS Code'da: Extensions görünümü > `...` > *Install from VSIX...*. Sonra etkinlik çubuğundan **TestFly Appium**
@@ -96,7 +96,7 @@ geçerlidir.
 | `testflyAppiumInspector.appium.autoStart` | `false` | Görünüm açılınca sunucuyu başlat |
 | `testflyAppiumInspector.adbPath` | (boş) | adb; boşsa `ANDROID_HOME`, `ANDROID_SDK_ROOT` ya da PATH |
 | `testflyAppiumInspector.ios.*` | | Gerçek iOS cihaz imzalama, yukarıya bakın |
-| `testflyAppiumInspector.ios.preferDevicectl` | `true` | Appium'u `APPIUM_XCUITEST_PREFER_DEVICECTL=1` ile başlat; XCUITest gerçek iPhone'ları bu uzantının listelediği gibi bulur |
+| `testflyAppiumInspector.ios.preferDevicectl` | `false` | Appium'u `APPIUM_XCUITEST_PREFER_DEVICECTL=1` ile başlat; Appium'un USB üzerinden bulamadığı (Wi-Fi) gerçek iPhone için. Bu sunucuda simülatör oturumları açılmaz |
 | `testflyAppiumInspector.autoRefreshAfterAction` | `true` | Bir eylemden sonra ekranı yeniden oku |
 | `testflyAppiumInspector.codegen.javaClient` | `11` | `11` ya da `9-10`, bkz. Java çıktısı |
 | `testflyAppiumInspector.codegen.style` | `pageFactory` | `pageFactory` ya da `appiumBy` |
