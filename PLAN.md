@@ -668,8 +668,8 @@ bir commit ile `AppiumInspectorExtensions` deposuna gider.
   protokolü.
 - Bölüm 19'daki "Faz 2'de doğrulanacak" maddeleri cihazda denenir ve sonuçları bu belgeye işlenir.
 - **Kabul:** Uzantıdan Appium başlatılır. Emülatör ve simülatör listelenir. Her iki platformda oturum açılıp ekran ve source
-  gelir. Tap, swipe, type, back ve home çalışır. Uygulamasız oturum açılır. Windows'ta (erişim varsa) Android oturumu açılır;
-  erişim yoksa "doğrulanamadı" diye kaydedilir.
+  gelir. Tap, swipe, type, back ve home çalışır. Uygulamasız oturum açılır. Windows makinesinde `.vsix` kurulur; Appium başlatılır,
+  durdurulur (süreç ağacı kalmaz) ve Android oturumu açılır.
 
 ### Faz 3: Mobil webview
 
@@ -714,7 +714,7 @@ Uzak sunucu ve bulut sağlayıcılar, çalışan bir oturuma bağlanma, iki plat
 | `gestures.ts` | Sahte sunucu | W3C Actions gövdesi; `/appium/extensions` sonucuna göre yedek komut seçimi |
 | `locators.js` | `node:test` ve `test/xml.js` okuyucusu | Öneri sırası, yerel sayım, kaçış, basit predicate/class chain/UiSelector sayımı |
 | `codegen.js` | `node:test`, metin karşılaştırması | İki java-client hedefi, iki stil, alan adı üretimi, Record, import'lar |
-| Java derleme | `test/java` Maven projesi (`mvn -q compile`, profiller: `jc11`, `jc10`, `sel40`, `sel451`) | Üretilen kodun derlendiğini kanıtlar; elle ya da CI'da çalışır, `npm test`'in parçası değildir |
+| Java derleme | `test/java` Maven projesi (`mvn -q compile`, profiller: `jc11`, `jc10`, `sel40`, `sel451`) | Üretilen kodun derlendiğini kanıtlar; elle çalışır (CI yok), `npm test`'in parçası değildir |
 | Webview | `test/preview.js` (Playwright, sahte host ve fixture XML) | Ağaç, overlay, XPath sayımı, finder |
 | Uçtan uca | Elle: emülatör ve simülatör | Yalnızca burada kanıtlanan şey "doğrulandı" diye raporlanır |
 
@@ -760,8 +760,10 @@ derlenmesi. Bundan önce "derlenir" denmeyecek.
 
 **Doğrulanamayacak:**
 
-- Gerçek iOS cihaz: `devicectl` ayrıştırması fixture ile test edilir, ama oturum açma doğrulanamaz.
-- Windows: Erişim yoksa doğrulanamaz ve öyle raporlanır.
+- Gerçek iOS cihaz: iPhone ve Apple ID sağlanana kadar `devicectl` ayrıştırması yalnızca fixture ile test edilir; oturum
+  açma doğrulanamaz ve öyle raporlanır (Bölüm 20.1).
+
+**Kullanıcının makinesinde elle doğrulanacak:** Windows'ta Android (Faz 2).
 
 ## 20. Kararlar
 
@@ -775,11 +777,30 @@ derlenmesi. Bundan önce "derlenir" denmeyecek.
 6. XML tek yerde (webview'da `DOMParser` ile) ayrıştırılır.
 7. Tarayıcıyı Selenium ile sürmek kapsam dışı; yalnızca çıktı Selenium.
 
+8. Windows'ta Android, kullanıcının Windows makinesinde Faz 2'de elle doğrulanır.
+9. `test/java` derleme kontrolü CI'a bağlanmaz; Faz 4 ve 5'te elle çalıştırılır (`mvn -q compile`).
+
 **Açık kalan kararlar:**
 
-1. Gerçek iOS imzalama değerleri (`xcodeOrgId`, `xcodeSigningId`) ve test için gerçek bir cihaz var mı?
-2. Windows'ta Android'i doğrulamak için erişim var mı?
-3. `test/java` derleme kontrolü bir GitHub Actions iş akışına bağlansın mı?
+1. Gerçek iOS cihaz testi: bir iPhone ve Xcode'a eklenmiş bir Apple ID var mı? Ücretsiz Apple ID yeterlidir; ücretli Apple
+   Developer Program şart değildir (ayrıntı: Bölüm 20.1).
+
+### 20.1 Gerçek iOS cihaz için gerekenler
+
+Appium, gerçek iPhone'a WebDriverAgent (WDA) adlı bir test uygulaması kurar. iOS imzasız uygulama çalıştırmadığı için WDA'nın
+bir Apple hesabıyla imzalanması gerekir. Simülatörde imza gerekmez.
+
+| Gereken | Ücretsiz Apple ID | Ücretli Apple Developer Program |
+|---|---|---|
+| Xcode > Settings > Accounts'a eklenmiş hesap | Evet | Evet |
+| `appium:xcodeOrgId` | Team ID (10 karakter, Xcode'da "Personal Team") | Team ID (developer.apple.com > Membership) |
+| `appium:xcodeSigningId` | `Apple Development` | `Apple Development` |
+| `appium:updatedWDABundleId` | **Gerekli**, size özgü olmalı (ör. `com.<ad>.WebDriverAgentRunner`) | İsteğe bağlı |
+| Provisioning profilinin süresi | 7 gün, sonra WDA yeniden derlenir | 1 yıl |
+
+Ayrıca: USB ile bağlı bir iPhone, iPhone'da "Bu bilgisayara güven" onayı ve Developer Mode açık olmalıdır
+(Ayarlar > Gizlilik ve Güvenlik > Geliştirici Modu). Ücretsiz hesapta, WDA ilk kez kurulduğunda iPhone'da
+Ayarlar > Genel > VPN ve Cihaz Yönetimi altından geliştiriciye güvenilmesi gerekir.
 
 ## 21. Faz 0 ve Faz 1 iş listesi
 
