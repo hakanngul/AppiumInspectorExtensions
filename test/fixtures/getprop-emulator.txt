@@ -1,0 +1,6 @@
+[ro.boot.qemu]: [1]
+[ro.boot.qemu.avd_name]: [Pixel_8_API_35]
+[ro.build.version.release]: [15]
+[ro.build.version.sdk]: [35]
+[ro.product.model]: [sdk_gphone64_arm64]
+[ro.product.manufacturer]: [Google]

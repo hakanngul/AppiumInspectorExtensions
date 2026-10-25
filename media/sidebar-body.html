@@ -1,0 +1,36 @@
+<div class="side">
+  <section class="card" id="serverCard" aria-labelledby="serverTitle">
+    <div class="card-head">
+      <span class="state-dot" id="serverDot" data-state="stopped"></span>
+      <div class="card-title">
+        <strong id="serverTitle">Appium server</strong>
+        <span class="muted small" id="serverState">Checking…</span>
+      </div>
+      <span class="version-badge" id="serverVersion" hidden></span>
+    </div>
+    <div class="url-row">
+      <code id="serverUrl"></code>
+      <button class="icon ghost" id="copyUrl" title="Copy server URL">
+        <svg viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 5.5v-2a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2"/></svg>
+      </button>
+    </div>
+    <button class="primary wide" id="serverButton" disabled>
+      <svg viewBox="0 0 16 16" id="serverIcon"><path d="M5 3.5v9l7-4.5z"/></svg><span id="serverButtonText">Start Appium</span>
+    </button>
+    <p class="error-line" id="serverError" hidden></p>
+    <p class="muted small links">
+      <button class="link" id="showLog">Server log</button><span aria-hidden="true">·</span><button class="link" data-settings>Settings</button>
+    </p>
+  </section>
+
+  <label class="lbl">Drivers <button type="button" class="link rescan" id="reloadDrivers" title="Read the installed drivers again">Reload</button></label>
+  <div class="rows" id="drivers"><p class="hint">Reading installed drivers…</p></div>
+
+  <label class="lbl">Devices <button type="button" class="link rescan" id="reloadDevices" title="Look for devices again">Reload</button></label>
+  <div class="rows" id="devices"><p class="hint">Looking for devices…</p></div>
+  <div id="deviceNotes"></div>
+
+  <button class="primary wide open-inspector" id="openInspector">
+    <svg viewBox="0 0 16 16"><rect x="4.5" y="1.5" width="7" height="13" rx="1.8"/><path d="M7 12h2"/></svg>Open Appium Inspector
+  </button>
+</div>

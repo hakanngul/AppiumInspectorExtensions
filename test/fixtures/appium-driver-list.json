@@ -1,0 +1,26 @@
+{
+    "uiautomator2": {
+        "pkgName": "appium-uiautomator2-driver",
+        "version": "8.7.0",
+        "installType": "npm",
+        "installSpec": "uiautomator2@8.7.0",
+        "installPath": "/Users/dev/.appium/node_modules/appium-uiautomator2-driver",
+        "appiumVersion": "^3.0.0-rc.2",
+        "automationName": "UiAutomator2",
+        "platformNames": [
+            "Android"
+        ],
+        "mainClass": "AndroidUiautomator2Driver",
+        "scripts": {
+            "reset": "scripts/reset.mjs"
+        },
+        "doctor": {
+            "checks": [
+                "./build/lib/doctor/required-checks.js",
+                "./build/lib/doctor/optional-checks.js"
+            ]
+        },
+        "installed": true,
+        "repositoryUrl": "https://github.com/appium/appium-uiautomator2-driver"
+    }
+}

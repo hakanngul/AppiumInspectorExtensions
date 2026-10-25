@@ -1,0 +1,214 @@
+<div class="app" id="app">
+  <header class="toolbar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" class="logo" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18.5h4"/><path d="M9.5 9.5l2 2 3.5-4"/></svg>
+      <span>Appium Inspector</span>
+    </div>
+
+    <button class="server" id="server" title="Appium server: checking…">
+      <span class="dot"></span><span id="serverText">Appium</span>
+    </button>
+
+    <div class="session-chip" id="sessionChip" hidden>
+      <span class="platform-badge" id="platform"></span>
+      <span class="session-device" id="sessionDevice"></span>
+    </div>
+
+    <div class="session-tools" id="sessionTools" hidden>
+      <button class="primary" id="refresh" title="Read the screen again (R)">
+        <svg viewBox="0 0 16 16"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/><path d="M13.5 2.5v3h-3"/></svg>
+        <span>Refresh</span>
+      </button>
+
+      <div class="segmented" id="mode" role="radiogroup" aria-label="Click mode">
+        <button data-mode="inspect" class="active" title="Click selects an element (I)">
+          <svg viewBox="0 0 16 16"><path d="M3 2l9 4.5-4 1.5-1.5 4z"/></svg><span>Inspect</span>
+        </button>
+        <button data-mode="tap" title="Click taps the device (T)">
+          <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.2"/><circle cx="8" cy="8" r="5.5"/></svg><span>Tap</span>
+        </button>
+        <button data-mode="record" title="Click taps the device and records a page-object step (E)">
+          <svg viewBox="0 0 16 16"><circle class="rec-dot" cx="8" cy="8" r="4"/></svg><span>Record</span>
+        </button>
+      </div>
+
+      <div class="group" role="group" aria-label="Device controls">
+        <button class="icon" data-button="back" id="backButton" title="Back (Android)">
+          <svg viewBox="0 0 16 16"><path d="M10 3L5 8l5 5"/></svg>
+        </button>
+        <button class="icon" data-button="home" title="Home">
+          <svg viewBox="0 0 16 16"><path d="M2.5 7.5L8 3l5.5 4.5"/><path d="M4 6.5V13h8V6.5"/></svg>
+        </button>
+        <button class="icon" data-swipe="up" title="Swipe up (scroll down)">
+          <svg viewBox="0 0 16 16"><path d="M8 13V3"/><path d="M4 7l4-4 4 4"/></svg>
+        </button>
+        <button class="icon" data-swipe="down" title="Swipe down (scroll up)">
+          <svg viewBox="0 0 16 16"><path d="M8 3v10"/><path d="M4 9l4 4 4-4"/></svg>
+        </button>
+        <button class="icon" data-swipe="left" title="Swipe left">
+          <svg viewBox="0 0 16 16"><path d="M13 8H3"/><path d="M7 4L3 8l4 4"/></svg>
+        </button>
+        <button class="icon" data-swipe="right" title="Swipe right">
+          <svg viewBox="0 0 16 16"><path d="M3 8h10"/><path d="M9 4l4 4-4 4"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+    <div class="status" id="status" data-state="idle">
+      <span class="dot"></span><span id="statusText">No session</span>
+    </div>
+    <button id="endSession" title="End the Appium session; the app keeps running" hidden>
+      <svg viewBox="0 0 16 16"><rect x="4" y="4" width="8" height="8" rx="1.2"/></svg><span>End session</span>
+    </button>
+  </header>
+
+  <!-- ── session setup ─────────────────────────────────────────────── -->
+  <main class="setup" id="setup">
+    <form class="setup-card" id="setupForm" autocomplete="off">
+      <h1>New Appium session</h1>
+      <p class="muted">Choose a device and an app. The app is not reinstalled or reset, and it keeps running when the session ends.</p>
+
+      <label class="lbl" for="deviceSel">Device
+        <span class="lbl-actions"><button type="button" class="link" id="bootDevice" hidden>Boot</button><button type="button" class="link" id="reloadDevices">Reload</button></span>
+      </label>
+      <select id="deviceSel"></select>
+      <p class="field-note" id="deviceNote"></p>
+
+      <label class="lbl">App</label>
+      <div class="segmented wide-seg" id="appKind" role="radiogroup" aria-label="App">
+        <button type="button" data-kind="installed" class="active">Installed app</button>
+        <button type="button" data-kind="file">App file</button>
+        <button type="button" data-kind="none">Current screen</button>
+      </div>
+
+      <div class="app-fields" id="fieldsInstalled">
+        <div class="android-only">
+          <label class="lbl" for="appPackage">App package</label>
+          <input id="appPackage" type="text" spellcheck="false" placeholder="com.example.app">
+          <label class="lbl" for="appActivity">App activity <span class="muted">optional</span></label>
+          <input id="appActivity" type="text" spellcheck="false" placeholder=".MainActivity">
+        </div>
+        <div class="ios-only">
+          <label class="lbl" for="bundleId">Bundle id</label>
+          <input id="bundleId" type="text" spellcheck="false" placeholder="com.example.app">
+        </div>
+      </div>
+      <div class="app-fields" id="fieldsFile" hidden>
+        <label class="lbl" for="appPath">App file <span class="muted" id="appFileHint">.apk</span></label>
+        <div class="file-row">
+          <input id="appPath" type="text" spellcheck="false" placeholder="/path/to/app">
+          <button type="button" id="browseApp">Browse…</button>
+        </div>
+      </div>
+      <div class="app-fields" id="fieldsNone" hidden>
+        <p class="field-note">No app is started: the session inspects whatever is on the screen.</p>
+      </div>
+
+      <details class="advanced" id="advanced">
+        <summary>Advanced capabilities (JSON)</summary>
+        <textarea id="extra" spellcheck="false" rows="5" placeholder='{ "appium:autoGrantPermissions": true }'></textarea>
+        <p class="field-note">Merged over the generated capabilities; names without a prefix get <code>appium:</code>; <code>null</code> removes one.</p>
+      </details>
+
+      <ul class="problems" id="problems" hidden></ul>
+
+      <div class="profile-row">
+        <select id="profileSel" aria-label="Saved profiles"><option value="">Saved profiles…</option></select>
+        <button type="button" id="saveProfile">Save</button>
+        <button type="button" id="deleteProfile" disabled>Delete</button>
+      </div>
+
+      <button class="primary wide" id="startSession" type="submit">
+        <svg viewBox="0 0 16 16"><path d="M5 3.5v9l7-4.5z"/></svg>Start session
+      </button>
+    </form>
+
+    <section class="caps-card">
+      <div class="caps-head"><span>Capabilities</span><button type="button" class="link" id="copyCaps">Copy</button></div>
+      <pre id="capsPreview" class="caps"></pre>
+    </section>
+  </main>
+
+  <!-- ── inspector ──────────────────────────────────────────────────── -->
+  <main class="panes" id="panes" hidden>
+    <section class="pane screen-pane">
+      <div class="pane-header">
+        <span class="pane-title">Screen</span>
+        <span class="muted" id="screenMeta"></span>
+        <span class="spacer"></span>
+        <label class="toggle" title="Outline every element">
+          <input type="checkbox" id="showBounds"><span>Bounds</span>
+        </label>
+      </div>
+      <div class="stage" id="stage">
+        <div class="device-frame" id="deviceFrame" hidden>
+          <div class="screen" id="screen">
+            <img id="shot" alt="Device screenshot" draggable="false">
+            <div class="overlay" id="overlay"></div>
+            <div class="find-layer" id="findLayer"></div>
+            <div class="hover-box" id="hoverBox" hidden></div>
+            <div class="select-box" id="selectBox" hidden></div>
+            <div class="tap-ripple" id="ripple" hidden></div>
+          </div>
+        </div>
+        <div class="empty-state" id="emptyScreen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18.5h4"/></svg>
+          <p class="title">No screen yet</p>
+          <p id="emptyHint">Reading the device…</p>
+        </div>
+        <div class="loading-bar" id="loadingBar" hidden></div>
+      </div>
+    </section>
+
+    <div class="resizer" data-resize="0" title="Drag to resize"></div>
+
+    <section class="pane tree-pane">
+      <div class="pane-header tabs" role="tablist">
+        <button class="tab active" data-tab="tree" role="tab">UI Tree</button>
+        <button class="tab" data-tab="source" role="tab">Page Source</button>
+        <button class="tab" data-tab="recorded" role="tab">Recorded <span class="tab-count" id="recordedCount" hidden></span></button>
+        <span class="spacer"></span>
+        <span class="muted" id="treeCount"></span>
+      </div>
+      <div class="search finder" id="searchBox">
+        <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+        <select id="strategy" class="strategy" aria-label="Locator strategy" title="Locator strategy, as in Appium Inspector"></select>
+        <input id="search" type="search" placeholder="Locator  ( / )" spellcheck="false">
+        <span class="find-count" id="findCount"></span>
+        <button class="icon mini" id="findServer" title="Search on the device (Appium findElements)"><svg viewBox="0 0 16 16"><rect x="4.5" y="1.5" width="7" height="13" rx="1.8"/><path d="M7 12h2"/></svg></button>
+        <button class="icon mini" id="findPrev" title="Previous match (Shift+Enter)"><svg viewBox="0 0 16 16"><path d="M4 10l4-4 4 4"/></svg></button>
+        <button class="icon mini" id="findNext" title="Next match (Enter)"><svg viewBox="0 0 16 16"><path d="M4 6l4 4 4-4"/></svg></button>
+        <button class="icon mini" id="findCopy" title="Copy as a Java locator"><svg viewBox="0 0 16 16"><rect x="5" y="5" width="8.5" height="8.5" rx="1.5"/><path d="M10.5 5V3.5A1.5 1.5 0 0 0 9 2H3.5A1.5 1.5 0 0 0 2 3.5V9A1.5 1.5 0 0 0 3.5 10.5H5"/></svg></button>
+      </div>
+      <div class="tree" id="tree" role="tree" tabindex="0"></div>
+      <div class="snapshot-wrap" id="sourceWrap" hidden>
+        <div class="snapshot-bar">
+          <span>Appium page source (XML)</span>
+          <button class="link" id="copySource">Copy</button>
+        </div>
+        <pre class="snapshot" id="source"></pre>
+      </div>
+      <div class="snapshot-wrap" id="recordedWrap" hidden>
+        <div class="snapshot-bar">
+          <span>Steps recorded in Record mode</span>
+          <span><button class="link" id="copyRecorded">Copy</button> · <button class="link" id="openRecorded">Open in editor</button> · <button class="link" id="clearRecorded">Clear</button></span>
+        </div>
+        <pre class="snapshot" id="recorded"></pre>
+      </div>
+    </section>
+
+    <div class="resizer" data-resize="1" title="Drag to resize"></div>
+
+    <section class="pane details-pane">
+      <div class="pane-header">
+        <span class="pane-title">Element</span>
+        <span class="spacer"></span>
+        <span class="ref-chip" id="selIndex" hidden></span>
+      </div>
+      <div class="details" id="details"></div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>

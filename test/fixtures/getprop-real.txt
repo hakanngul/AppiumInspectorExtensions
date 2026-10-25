@@ -1,0 +1,3 @@
+[ro.build.version.release]: [14]
+[ro.product.model]: [SM-A546E]
+[ro.product.manufacturer]: [samsung]

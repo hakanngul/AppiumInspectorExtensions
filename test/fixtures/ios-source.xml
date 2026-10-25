@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AppiumAUT>
+  <XCUIElementTypeApplication type="XCUIElementTypeApplication" name="Shop" label="Shop" enabled="true" visible="true" accessible="false" x="0" y="0" width="402" height="874" index="0">
+    <XCUIElementTypeWindow type="XCUIElementTypeWindow" enabled="true" visible="true" accessible="false" x="0" y="0" width="402" height="874" index="0">
+      <XCUIElementTypeOther type="XCUIElementTypeOther" enabled="true" visible="true" accessible="false" x="0" y="0" width="402" height="874" index="0">
+        <XCUIElementTypeStaticText type="XCUIElementTypeStaticText" value="Welcome back" name="Welcome back" label="Welcome back" enabled="true" visible="true" accessible="true" x="24" y="120" width="354" height="34" index="0"/>
+        <XCUIElementTypeTextField type="XCUIElementTypeTextField" value="E-mail" name="emailField" label="" placeholderValue="E-mail" enabled="true" visible="true" accessible="true" x="24" y="180" width="354" height="44" index="1"/>
+        <XCUIElementTypeSecureTextField type="XCUIElementTypeSecureTextField" value="Password" name="passwordField" label="" placeholderValue="Password" enabled="true" visible="true" accessible="true" x="24" y="240" width="354" height="44" index="2"/>
+        <XCUIElementTypeButton type="XCUIElementTypeButton" name="loginButton" label="Sign in" enabled="true" visible="true" accessible="true" x="24" y="310" width="354" height="50" index="3"/>
+        <XCUIElementTypeButton type="XCUIElementTypeButton" name="Add to cart" label="Add to cart" enabled="true" visible="true" accessible="true" x="24" y="400" width="170" height="44" index="4"/>
+        <XCUIElementTypeButton type="XCUIElementTypeButton" name="Add to cart" label="Add to cart" enabled="true" visible="true" accessible="true" x="208" y="400" width="170" height="44" index="5"/>
+        <XCUIElementTypeImage type="XCUIElementTypeImage" enabled="true" visible="false" accessible="false" x="24" y="600" width="354" height="200" index="6"/>
+      </XCUIElementTypeOther>
+    </XCUIElementTypeWindow>
+  </XCUIElementTypeApplication>
+</AppiumAUT>

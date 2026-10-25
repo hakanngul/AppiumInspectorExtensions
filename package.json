@@ -1,0 +1,202 @@
+{
+  "name": "testfly-appium-inspector",
+  "displayName": "TestFly - Appium Inspector",
+  "description": "Start and stop an Appium 3 server, list Android and iOS devices, and inspect native app screens with ready-to-paste Appium java-client locators.",
+  "version": "0.1.0",
+  "publisher": "hakanngul",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hakanngul/AppiumInspectorExtensions.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Testing",
+    "Other"
+  ],
+  "keywords": [
+    "appium",
+    "inspector",
+    "android",
+    "ios",
+    "uiautomator2",
+    "xcuitest",
+    "pagefactory",
+    "locator"
+  ],
+  "icon": "media/icon.png",
+  "main": "./out/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      {
+        "command": "testflyAppiumInspector.open",
+        "title": "Open Appium Inspector",
+        "category": "TestFly Appium",
+        "icon": "$(device-mobile)"
+      },
+      {
+        "command": "testflyAppiumInspector.startServer",
+        "title": "Start Appium Server",
+        "category": "TestFly Appium",
+        "icon": "$(play)"
+      },
+      {
+        "command": "testflyAppiumInspector.stopServer",
+        "title": "Stop Appium Server",
+        "category": "TestFly Appium",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "testflyAppiumInspector.showServerLog",
+        "title": "Show Appium Server Log",
+        "category": "TestFly Appium",
+        "icon": "$(output)"
+      },
+      {
+        "command": "testflyAppiumInspector.refreshDevices",
+        "title": "Reload Devices",
+        "category": "TestFly Appium",
+        "icon": "$(refresh)"
+      }
+    ],
+    "configuration": {
+      "title": "TestFly - Appium Inspector",
+      "properties": {
+        "testflyAppiumInspector.appium.path": {
+          "type": "string",
+          "default": "appium",
+          "description": "Appium executable used to start the server (Appium 3.x)."
+        },
+        "testflyAppiumInspector.appium.host": {
+          "type": "string",
+          "default": "127.0.0.1",
+          "description": "Address the started Appium server listens on."
+        },
+        "testflyAppiumInspector.appium.port": {
+          "type": "number",
+          "default": 4723,
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Port of the Appium server."
+        },
+        "testflyAppiumInspector.appium.basePath": {
+          "type": "string",
+          "default": "/",
+          "description": "Base path of the Appium server (--base-path), for example /wd/hub."
+        },
+        "testflyAppiumInspector.appium.allowCors": {
+          "type": "boolean",
+          "default": true,
+          "description": "Start the server with --allow-cors."
+        },
+        "testflyAppiumInspector.appium.autoStart": {
+          "type": "boolean",
+          "default": false,
+          "description": "Start the Appium server when the TestFly Appium view opens and no server answers."
+        },
+        "testflyAppiumInspector.adbPath": {
+          "type": "string",
+          "default": "",
+          "description": "adb executable. Empty: adb from ANDROID_HOME, ANDROID_SDK_ROOT or PATH."
+        },
+        "testflyAppiumInspector.ios.xcodeOrgId": {
+          "type": "string",
+          "default": "",
+          "description": "Team ID that signs WebDriverAgent on a real iOS device (appium:xcodeOrgId)."
+        },
+        "testflyAppiumInspector.ios.xcodeSigningId": {
+          "type": "string",
+          "default": "Apple Development",
+          "description": "Signing identity for WebDriverAgent on a real iOS device (appium:xcodeSigningId)."
+        },
+        "testflyAppiumInspector.ios.updatedWDABundleId": {
+          "type": "string",
+          "default": "",
+          "description": "Your own WebDriverAgent bundle id, needed with a free Apple ID (appium:updatedWDABundleId)."
+        },
+        "testflyAppiumInspector.autoRefreshAfterAction": {
+          "type": "boolean",
+          "default": true,
+          "description": "Read the screen again after a tap, swipe, text, back or home action."
+        },
+        "testflyAppiumInspector.codegen.javaClient": {
+          "type": "string",
+          "enum": [
+            "11",
+            "9-10"
+          ],
+          "enumDescriptions": [
+            "Appium java-client 11.x (Selenium 4.50+): PageFactory from io.appium.java_client.support",
+            "Appium java-client 9.x or 10.x (Selenium 4.x): PageFactory from org.openqa.selenium.support"
+          ],
+          "default": "11",
+          "description": "java-client version the generated Java code compiles against."
+        },
+        "testflyAppiumInspector.codegen.style": {
+          "type": "string",
+          "enum": [
+            "pageFactory",
+            "appiumBy"
+          ],
+          "enumDescriptions": [
+            "@AndroidFindBy / @iOSXCUITFindBy fields with PageFactory",
+            "private static final By constants (AppiumBy / By.xpath)"
+          ],
+          "default": "pageFactory",
+          "description": "Style of the generated Java locators."
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "testflyAppiumInspector",
+          "title": "TestFly Appium",
+          "icon": "media/activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "testflyAppiumInspector": [
+        {
+          "type": "webview",
+          "id": "testflyAppiumInspector.home",
+          "name": "Appium"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "testflyAppiumInspector.open",
+          "when": "view == testflyAppiumInspector.home",
+          "group": "navigation@0"
+        },
+        {
+          "command": "testflyAppiumInspector.refreshDevices",
+          "when": "view == testflyAppiumInspector.home",
+          "group": "navigation@1"
+        },
+        {
+          "command": "testflyAppiumInspector.showServerLog",
+          "when": "view == testflyAppiumInspector.home",
+          "group": "navigation@2"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "test": "npm run build && node --test test/*.test.js",
+    "package": "npm run build && vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "~1.85.0",
+    "@vscode/vsce": "^3.2.0",
+    "typescript": "^5.4.0"
+  }
+}
