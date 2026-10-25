@@ -18,6 +18,10 @@ const devices = [
 const base = {
     busy: false, appiumVersion: '3.8.0', platform: 'darwin', devicesLoading: false, deviceNotes: [], devices,
     drivers: [{ name: 'uiautomator2', version: '8.7.0', automationName: 'UiAutomator2', platforms: ['Android'] }],
+    ports: [
+        { port: 4723, pid: 412, command: 'node', label: 'Appium server', own: true },
+        { port: 8100, pid: 8811, command: 'xcodebuild', label: 'WebDriverAgent (iOS)', own: false },
+    ],
 };
 const states = {
     running: { ...base, server: { state: 'running', url: 'http://127.0.0.1:4723', version: '3.8.0', message: '' } },

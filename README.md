@@ -5,7 +5,7 @@
 A VS Code extension for Appium 3: start and stop the Appium server, see the installed drivers and every Android and iOS
 device in one place, and inspect native app screens with ready-to-paste Appium java-client locators.
 
-> **Status: 0.2.2, test release.** Everything below is built and covered by tests against fake Appium servers and
+> **Status: 0.3.0, test release.** Everything below is built and covered by tests against fake Appium servers and
 > a real Appium 3.8.0 server start/stop; sessions on real emulators, simulators and devices still need a first run on a
 > machine that has them. See [PLAN.md](PLAN.md).
 
@@ -19,6 +19,9 @@ device in one place, and inspect native app screens with ready-to-paste Appium j
 - **Devices:** Android emulators and devices (adb), iOS simulators (`xcrun simctl`) and real iOS devices
   (`xcrun devicectl`, with `xctrace` as fallback). Devices that cannot be used show why (unauthorized, offline, not
   paired). Shut down simulators can be booted from the list.
+- **Ports:** which process listens on Appium's ports (the server, WebDriverAgent 8100-8199, the MJPEG stream 9100,
+  UiAutomator2 8200-8299), with a **Stop** button that asks first. A leftover WebDriverAgent or an Appium started in a
+  terminal can be stopped from here. On iOS, a busy 8100 or 9100 is swapped for a free port in the session.
 - **Appium Inspector panel** (*Open Appium Inspector*, or *Inspect* next to a device):
   - **Session:** pick a device and an app: an installed app (`appPackage`/`appActivity` or `bundleId`), an app file
     (`.apk`, `.app`, `.ipa`), or the current screen without an app. A live preview shows the capabilities; advanced JSON
@@ -48,7 +51,7 @@ The generated classes were compiled with `javac` against java-client 11.0.0 and 
 ## Install
 
 ```bash
-code --install-extension testfly-appium-inspector-0.2.2.vsix
+code --install-extension testfly-appium-inspector-0.3.0.vsix
 ```
 
 Or in VS Code: Extensions view > `...` > *Install from VSIX...*. Then open the **TestFly Appium** view in the activity
@@ -98,8 +101,9 @@ signature lasts 7 days.
 | `testflyAppiumInspector.codegen.javaClient` | `11` | `11` or `9-10`, see Java output |
 | `testflyAppiumInspector.codegen.style` | `pageFactory` | `pageFactory` or `appiumBy` |
 
-VS Code started from the Dock does not see the PATH of your shell profile; the extension reads it from a login shell
-once. If Appium or adb is still not found, set its path above.
+VS Code started from the Dock does not see your shell profile; the extension reads `PATH`, `ANDROID_HOME`,
+`ANDROID_SDK_ROOT` and `JAVA_HOME` from a login shell once, also looks in the default SDK folder
+(`~/Library/Android/sdk` on macOS), and passes them to Appium. If Appium or adb is still not found, set its path above.
 
 ## Commands
 

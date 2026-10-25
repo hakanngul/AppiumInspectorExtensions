@@ -51,3 +51,6 @@ button.danger:hover { background: var(--err); }
 .hint code { font: 11px var(--mono); padding: 0 3px; border-radius: 3px; background: var(--input-bg); }
 .group-title { font-size: 11px; color: var(--muted); margin: 6px 6px 2px; }
 .open-inspector { margin-top: 18px; }
+.port-num { font: 600 12px var(--mono); min-width: 40px; color: var(--fg); }
+.row button.danger-outline { color: var(--err); background: transparent; border-color: color-mix(in srgb, var(--err) 45%, transparent); }
+.row button.danger-outline:hover { background: color-mix(in srgb, var(--err) 14%, transparent); }

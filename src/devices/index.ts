@@ -1,5 +1,5 @@
 import { ToolNotFoundError } from '../process';
-import { adbCommand, listAndroid } from './adb';
+import { listAndroid, resolveAdb } from './adb';
 import { listRealIos } from './devicectl';
 import { listSimulators } from './simctl';
 import { DeviceInfo } from './types';
@@ -20,7 +20,7 @@ export interface DeviceOptions {
 /** Android devices and emulators everywhere; iOS simulators and devices on macOS. Sources run in parallel. */
 export async function listDevices(o: DeviceOptions): Promise<DeviceList> {
     const mac = (o.platform ?? process.platform) === 'darwin';
-    const sources: [string, () => Promise<DeviceInfo[]>][] = [['Android', () => listAndroid(adbCommand(o.adbPath))]];
+    const sources: [string, () => Promise<DeviceInfo[]>][] = [['Android', async () => listAndroid(await resolveAdb(o.adbPath))]];
     if (mac) {
         sources.push(['iOS simulators', listSimulators], ['iOS devices', listRealIos]);
     }

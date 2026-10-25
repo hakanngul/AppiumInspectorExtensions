@@ -5,7 +5,7 @@
 Appium 3 için bir VS Code uzantısı: Appium sunucusunu başlatın ve durdurun, yüklü sürücüleri ve bütün Android ve iOS
 cihazları tek yerde görün ve native uygulama ekranlarını, hazır Appium java-client locator'larıyla inceleyin.
 
-> **Durum: 0.2.2, deneme sürümü.** Aşağıdakilerin hepsi yazıldı; sahte Appium sunucularıyla ve gerçek Appium 3.8.0
+> **Durum: 0.3.0, deneme sürümü.** Aşağıdakilerin hepsi yazıldı; sahte Appium sunucularıyla ve gerçek Appium 3.8.0
 > başlat/durdur ile test edildi. Gerçek emülatör, simülatör ve cihazlarda oturum henüz bunlara sahip bir makinede
 > denenmedi. Bkz. [PLAN.md](PLAN.md).
 
@@ -19,6 +19,9 @@ cihazları tek yerde görün ve native uygulama ekranlarını, hazır Appium jav
 - **Cihazlar:** Android emülatör ve cihazlar (adb), iOS simülatörleri (`xcrun simctl`) ve gerçek iOS cihazlar
   (`xcrun devicectl`, yedek olarak `xctrace`). Kullanılamayan cihazlar nedenini gösterir (yetki yok, çevrimdışı, eşleşmemiş).
   Kapalı simülatörler listeden başlatılabilir (Boot).
+- **Portlar:** Appium'un portlarını (sunucu, WebDriverAgent 8100-8199, MJPEG akışı 9100, UiAutomator2 8200-8299) hangi
+  sürecin tuttuğu ve önce onay soran bir **Stop** düğmesi. Açık kalmış bir WebDriverAgent ya da terminalden başlatılmış
+  bir Appium buradan durdurulabilir. iOS'ta 8100 ya da 9100 doluysa oturum boş bir port kullanır.
 - **Appium Inspector paneli** (*Open Appium Inspector* ya da cihazın yanındaki *Inspect*):
   - **Oturum:** Cihaz ve uygulama seçin: yüklü uygulama (`appPackage`/`appActivity` ya da `bundleId`), uygulama dosyası
     (`.apk`, `.app`, `.ipa`) ya da uygulamasız, o anki ekran. Capabilities canlı önizlenir; gelişmiş JSON capabilities ve
@@ -48,7 +51,7 @@ cihazları tek yerde görün ve native uygulama ekranlarını, hazır Appium jav
 ## Kurulum
 
 ```bash
-code --install-extension testfly-appium-inspector-0.2.2.vsix
+code --install-extension testfly-appium-inspector-0.3.0.vsix
 ```
 
 Ya da VS Code'da: Extensions görünümü > `...` > *Install from VSIX...*. Sonra etkinlik çubuğundan **TestFly Appium**
@@ -98,8 +101,9 @@ geçerlidir.
 | `testflyAppiumInspector.codegen.javaClient` | `11` | `11` ya da `9-10`, bkz. Java çıktısı |
 | `testflyAppiumInspector.codegen.style` | `pageFactory` | `pageFactory` ya da `appiumBy` |
 
-Dock'tan açılan VS Code, kabuk profilinizdeki PATH'i görmez; uzantı bunu bir kez giriş kabuğundan okur. Appium ya da adb
-yine bulunamazsa yolunu yukarıdaki ayarlardan verin.
+Dock'tan açılan VS Code kabuk profilinizi görmez; uzantı `PATH`, `ANDROID_HOME`, `ANDROID_SDK_ROOT` ve `JAVA_HOME`
+değerlerini bir kez giriş kabuğundan okur, varsayılan SDK klasörüne de (`macOS'ta ~/Library/Android/sdk`) bakar ve bunları
+Appium'a geçirir. Appium ya da adb yine bulunamazsa yolunu yukarıdaki ayarlardan verin.
 
 ## Komutlar
 

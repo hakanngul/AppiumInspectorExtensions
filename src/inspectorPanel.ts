@@ -6,6 +6,7 @@ import { AppInput, buildCapabilities, capabilityProblems, CapabilityInput, capab
 import { Direction } from './appium/gestures';
 import { InspectorSession, Locator } from './appium/session';
 import { checkAppFile } from './apps';
+import { firstFreePort, isPortFree } from './ports';
 import { AppiumController, ControllerState, SECTION } from './controller';
 import { InstalledApp, launchActivity, listInstalledApps } from './devices/installedApps';
 import { DeviceInfo } from './devices/types';
@@ -251,10 +252,24 @@ export class InspectorPanel {
                 warnings.push(`The device starts ${app.appPackage.trim()} with ${found}; "${typed}" may not exist. Empty the activity field to use the device's.`);
             }
         }
+        const extraCaps: Record<string, unknown> = { ...(extra.value ?? {}) };
+        // iOS: WebDriverAgent (8100) and the MJPEG stream (9100) need a free port on this Mac; a leftover WebDriverAgent
+        // or another Appium often still holds the default. Take the next free one unless the user set one.
+        if (device.platform === 'ios') {
+            for (const [cap, base, what] of [['wdaLocalPort', 8100, 'WebDriverAgent'], ['mjpegServerPort', 9100, 'the MJPEG stream']] as const) {
+                if (extraCaps[cap] === undefined && extraCaps[`appium:${cap}`] === undefined && !(await isPortFree(base))) {
+                    const free = await firstFreePort(base + 1, base + 99);
+                    if (free) {
+                        extraCaps[`appium:${cap}`] = free;
+                        notes.push(`Port ${base} is in use, so ${what} uses ${free}. The Ports list in the TestFly Appium view shows what holds ${base}.`);
+                    }
+                }
+            }
+        }
         const input: CapabilityInput = {
             device,
             app,
-            extra: extra.value,
+            extra: extraCaps,
             signing: {
                 xcodeOrgId: cfg.get('ios.xcodeOrgId', ''),
                 xcodeSigningId: cfg.get('ios.xcodeSigningId', 'Apple Development'),
@@ -405,6 +420,9 @@ export class InspectorPanel {
 
     private fail(e: unknown) {
         let message = (e as Error).message;
+        if (/port #?\d+ is (occupied|in use|busy)|EADDRINUSE/i.test(message)) {
+            message += ' The Ports list in the TestFly Appium view shows which process holds it and can stop it.';
+        }
         if (/Unknown device or simulator UDID/.test(message)) {
             message += this.controller.current.server.state === 'external'
                 ? ' The Appium server was started outside VS Code: start it with APPIUM_XCUITEST_PREFER_DEVICECTL=1, or stop it and press Start Appium here. Connect the iPhone with a cable.'

@@ -1,5 +1,5 @@
 import { run } from '../process';
-import { adbCommand } from './adb';
+import { resolveAdb } from './adb';
 import { DeviceInfo } from './types';
 
 export interface InstalledApp {
@@ -156,7 +156,7 @@ export function parseDevicectlApps(json: string): InstalledApp[] {
 /** Apps installed on a ready device, for the session form. */
 export async function listInstalledApps(device: DeviceInfo, adbSetting: string): Promise<InstalledApp[]> {
     if (device.platform === 'android') {
-        const { stdout } = await run(adbCommand(adbSetting), ['-s', device.id, 'shell', 'pm', 'list', 'packages', '-3'], 20_000);
+        const { stdout } = await run(await resolveAdb(adbSetting), ['-s', device.id, 'shell', 'pm', 'list', 'packages', '-3'], 20_000);
         return parseAndroidPackages(stdout);
     }
     if (device.kind === 'simulator') {
@@ -169,7 +169,7 @@ export async function listInstalledApps(device: DeviceInfo, adbSetting: string):
 
 /** The launcher activity of an Android package; Appium finds it too when appActivity is left empty. */
 export async function launchActivity(adbSetting: string, serial: string, pkg: string): Promise<string | undefined> {
-    const { stdout } = await run(adbCommand(adbSetting),
+    const { stdout } = await run(await resolveAdb(adbSetting),
         ['-s', serial, 'shell', 'cmd', 'package', 'resolve-activity', '--brief', '-a', 'android.intent.action.MAIN', '-c', 'android.intent.category.LAUNCHER', pkg], 15_000);
     return parseLaunchActivity(stdout, pkg);
 }

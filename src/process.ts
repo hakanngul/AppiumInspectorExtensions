@@ -15,39 +15,84 @@ export class ToolNotFoundError extends Error {
     }
 }
 
-let loginPath: Promise<string | undefined> | undefined;
+const LOGIN_VARS = ['PATH', 'ANDROID_HOME', 'ANDROID_SDK_ROOT', 'JAVA_HOME'];
+let loginVars: Promise<Record<string, string>> | undefined;
 
 /**
- * PATH as a login shell sets it. VS Code started from the Dock (macOS) or a desktop launcher does not inherit the PATH of
- * the user's shell profile, where Appium, adb and Homebrew usually live. Read once, then cached.
+ * PATH, ANDROID_HOME, ANDROID_SDK_ROOT and JAVA_HOME as a login shell sets them. VS Code started from the Dock (macOS)
+ * or a desktop launcher does not inherit the user's shell profile, where Appium, adb, the Android SDK and Java are
+ * usually set up. Read once, then cached.
  */
-export function loginShellPath(): Promise<string | undefined> {
+export function loginShellEnv(): Promise<Record<string, string>> {
     if (isWindows) {
-        return Promise.resolve(undefined);
+        return Promise.resolve({});
     }
-    loginPath ??= new Promise(resolve => {
+    loginVars ??= new Promise(resolve => {
         const shell = process.env.SHELL || '/bin/zsh';
-        execFile(shell, ['-ilc', 'printf "__PATH__%s__PATH__" "$PATH"'], { timeout: 5_000, env: process.env }, (err, stdout) => {
-            const match = /__PATH__(.*)__PATH__/.exec(stdout ?? '');
-            resolve(err && !match ? undefined : match?.[1]);
+        const script = `for v in ${LOGIN_VARS.join(' ')}; do printf "__ENV__%s=%s\\n" "$v" "$(printenv "$v")"; done`;
+        execFile(shell, ['-ilc', script], { timeout: 5_000, env: process.env }, (_err, stdout) => {
+            const vars: Record<string, string> = {};
+            for (const m of String(stdout ?? '').matchAll(/^__ENV__(\w+)=(.*)$/gm)) {
+                if (m[2]) {
+                    vars[m[1]] = m[2];
+                }
+            }
+            resolve(vars);
         });
     });
-    return loginPath;
+    return loginVars;
 }
 
-/** process.env with the login shell's PATH entries appended, for every tool this extension runs. */
+/** Where Android Studio installs the SDK by default. */
+export function defaultAndroidSdk(home = process.env.HOME || process.env.USERPROFILE || '', platform = process.platform): string {
+    return platform === 'darwin' ? path.join(home, 'Library', 'Android', 'sdk')
+        : platform === 'win32' ? path.join(process.env.LOCALAPPDATA || path.join(home, 'AppData', 'Local'), 'Android', 'Sdk')
+            : path.join(home, 'Android', 'Sdk');
+}
+
+let javaHome: Promise<string | undefined> | undefined;
+
+/** A JDK when JAVA_HOME is unset: macOS java_home, then the JBR bundled with Android Studio. */
+function findJavaHome(): Promise<string | undefined> {
+    javaHome ??= new Promise(resolve => {
+        const studio = ['/Applications/Android Studio.app/Contents/jbr/Contents/Home', '/Applications/Android Studio.app/Contents/jre/Contents/Home'];
+        const fallback = () => resolve(studio.find(p => fs.existsSync(path.join(p, 'bin', 'java'))));
+        if (process.platform !== 'darwin') {
+            return fallback();
+        }
+        execFile('/usr/libexec/java_home', [], { timeout: 5_000 }, (err, stdout) => (err || !String(stdout).trim() ? fallback() : resolve(String(stdout).trim())));
+    });
+    return javaHome;
+}
+
+/**
+ * process.env for every tool this extension runs, Appium included: the login shell's PATH entries appended, and
+ * ANDROID_HOME / ANDROID_SDK_ROOT / JAVA_HOME filled in when VS Code did not get them (UiAutomator2 needs both).
+ */
 export async function toolEnv(extra: NodeJS.ProcessEnv = {}): Promise<NodeJS.ProcessEnv> {
     const env = { ...process.env, ...extra };
-    const login = await loginShellPath();
-    if (login) {
-        const key = Object.keys(env).find(k => k.toUpperCase() === 'PATH') ?? 'PATH';
-        const parts = (env[key] ?? '').split(path.delimiter).filter(Boolean);
-        for (const p of login.split(path.delimiter)) {
-            if (p && !parts.includes(p)) {
-                parts.push(p);
-            }
+    const login = await loginShellEnv();
+    const key = Object.keys(env).find(k => k.toUpperCase() === 'PATH') ?? 'PATH';
+    const parts = (env[key] ?? '').split(path.delimiter).filter(Boolean);
+    for (const p of (login.PATH ?? '').split(path.delimiter)) {
+        if (p && !parts.includes(p)) {
+            parts.push(p);
         }
-        env[key] = parts.join(path.delimiter);
+    }
+    env[key] = parts.join(path.delimiter);
+    for (const name of ['ANDROID_HOME', 'ANDROID_SDK_ROOT', 'JAVA_HOME']) {
+        if (!env[name] && login[name]) {
+            env[name] = login[name];
+        }
+    }
+    if (!env.ANDROID_HOME && !env.ANDROID_SDK_ROOT && fs.existsSync(defaultAndroidSdk())) {
+        env.ANDROID_HOME = defaultAndroidSdk();
+    }
+    if (!env.JAVA_HOME) {
+        const java = await findJavaHome();
+        if (java) {
+            env.JAVA_HOME = java;
+        }
     }
     return env;
 }

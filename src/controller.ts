@@ -3,6 +3,7 @@ import { AppiumServer, InstalledDriver, ServerInfo, ServerOptions } from './appi
 import { InspectorSession } from './appium/session';
 import { DeviceInfo, listDevices } from './devices';
 import { bootSimulator } from './devices/simctl';
+import { appiumPortUses, PortUse, stopProcess } from './ports';
 
 export const SECTION = 'testflyAppiumInspector';
 
@@ -18,6 +19,9 @@ export interface ControllerState {
     deviceNotes: string[];
     devicesLoading: boolean;
     platform: NodeJS.Platform;
+    /** Processes listening on Appium's ports (server, WebDriverAgent, MJPEG, UiAutomator2). */
+    ports: (PortUse & { label: string; own: boolean })[];
+    portsError?: string;
 }
 
 /** Owns the Appium server and the device list for the window; the sidebar and the commands drive it. */
@@ -31,7 +35,7 @@ export class AppiumController implements vscode.Disposable {
 
     constructor() {
         this.server = this.createServer();
-        this.state = { server: this.server.current, busy: false, devices: [], deviceNotes: [], devicesLoading: false, platform: process.platform };
+        this.state = { server: this.server.current, busy: false, devices: [], deviceNotes: [], devicesLoading: false, platform: process.platform, ports: [] };
         this.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
             if (e.affectsConfiguration(`${SECTION}.appium`)) {
                 void this.applyServerSettings();
@@ -106,7 +110,7 @@ export class AppiumController implements vscode.Disposable {
             if (info.state === 'external') {
                 void vscode.window.showInformationMessage(`An Appium server already runs at ${info.url}; it is used as is.`);
             }
-            await Promise.all([this.refreshDevices(), this.state.drivers ? Promise.resolve() : this.refreshAppium()]);
+            await Promise.all([this.refreshDevices(), this.refreshPorts(), this.state.drivers ? Promise.resolve() : this.refreshAppium()]);
         } catch (e) {
             this.fail(e);
         } finally {
@@ -114,13 +118,19 @@ export class AppiumController implements vscode.Disposable {
         }
     }
 
-    async stop() {
+    async stop(): Promise<void> {
         if (this.state.busy) {
             return;
         }
         if (this.state.server.state === 'external') {
-            void vscode.window.showWarningMessage(`The Appium server at ${this.server.url} was not started by TestFly; stop it where it runs.`);
-            return;
+            // Started outside VS Code: stop the process that listens on the server's port, after asking.
+            await this.refreshPorts();
+            const holder = this.state.ports.find(p => p.port === this.server.options.port);
+            if (!holder) {
+                void vscode.window.showWarningMessage(`No process was found on port ${this.server.options.port}; stop the Appium server where it runs.`);
+                return;
+            }
+            return this.stopPort(holder.pid);
         }
         this.update({ busy: true, error: undefined });
         try {
@@ -129,7 +139,49 @@ export class AppiumController implements vscode.Disposable {
             this.fail(e);
         } finally {
             this.update({ busy: false });
+            void this.refreshPorts();
         }
+    }
+
+    private portsBusy = false;
+
+    /** Who listens on Appium's ports: shown in the sidebar, so that a leftover server or WebDriverAgent can be stopped. */
+    async refreshPorts() {
+        if (this.portsBusy) {
+            return;
+        }
+        this.portsBusy = true;
+        try {
+            const own = this.server.pid;
+            const ports = (await appiumPortUses(this.server.options.port)).map(p => ({ ...p, own: p.pid === own }));
+            if (JSON.stringify(ports) !== JSON.stringify(this.state.ports) || this.state.portsError) {
+                this.update({ ports, portsError: undefined });
+            }
+        } catch (e) {
+            this.update({ ports: [], portsError: (e as Error).message });
+        } finally {
+            this.portsBusy = false;
+        }
+    }
+
+    /** Stops the process holding an Appium port, after asking; the server this extension started is stopped normally. */
+    async stopPort(pid: number): Promise<void> {
+        const uses = this.state.ports.filter(p => p.pid === pid);
+        if (pid === this.server.pid) {
+            return this.stop();
+        }
+        const what = uses.length ? `${uses[0].command || 'process'} (pid ${pid}) on port ${uses.map(u => u.port).join(', ')} — ${uses[0].label}` : `process ${pid}`;
+        const choice = await vscode.window.showWarningMessage(`Stop ${what}?`, { modal: true, detail: 'It was not started by this extension. Unsaved work in that process is lost.' }, 'Stop process');
+        if (choice !== 'Stop process') {
+            return;
+        }
+        try {
+            await stopProcess(pid);
+            this.output.appendLine(`Stopped ${what}`);
+        } catch (e) {
+            this.fail(e);
+        }
+        await Promise.all([this.refreshPorts(), this.checkServer()]);
     }
 
     /** Appium version and installed drivers, from the Appium CLI. */

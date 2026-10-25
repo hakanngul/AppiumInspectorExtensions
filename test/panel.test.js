@@ -120,6 +120,19 @@ test('form, session, screen, tap, verify and end through the panel', async () =>
         assert.match(p.warnings[0], /starts com\.starlettech\.letsbet\.stage with com\.starlettech\.letsbet\.ui\.splash\.SplashActivity/);
         assert.deepStrictEqual(p.problems, []);
 
+        // iOS: a busy WebDriverAgent port is swapped for a free one in the capabilities
+        const blocker = require('node:net').createServer();
+        const blocked = await new Promise(r => blocker.once('error', () => r(false)).listen(8100, '127.0.0.1', () => r(true)));
+        controller.update({ devices: [...controller.current.devices, { id: '00008120-00042DC80EF8A01E', name: 'iPhone 15', platform: 'ios', kind: 'real', version: '26.5.2', state: 'ready' }] });
+        config['ios.xcodeOrgId'] = 'ABCDE12345';
+        await receive({ type: 'preview', form: { deviceId: '00008120-00042DC80EF8A01E', app: { kind: 'installed', bundleId: 'com.nesine.new-bet-dev' }, extra: '' } });
+        const ios = posted.filter(m => m.type === 'preview').pop();
+        assert.ok(ios.capabilities['appium:wdaLocalPort'] > 8100, JSON.stringify(ios.capabilities));
+        assert.ok(ios.notes.some(n => /Port 8100 is in use, so WebDriverAgent uses \d+/.test(n)));
+        await receive({ type: 'preview', form: { deviceId: '00008120-00042DC80EF8A01E', app: { kind: 'installed', bundleId: 'com.nesine.new-bet-dev' }, extra: '{"wdaLocalPort": 8100}' } });
+        assert.strictEqual(posted.filter(m => m.type === 'preview').pop().capabilities['appium:wdaLocalPort'], 8100, 'a port the user set is kept');
+        if (blocked) blocker.close();
+
         const form = { deviceId: 'emulator-5554', app: { kind: 'installed', appPackage: 'com.example.shop', appActivity: '' }, extra: '{"autoGrantPermissions": true}' };
         await receive({ type: 'preview', form });
         const preview = posted.filter(m => m.type === 'preview').pop();

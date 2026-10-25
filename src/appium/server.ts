@@ -56,6 +56,11 @@ export class AppiumServer {
     }
 
     /** True while the server process this extension started is alive. */
+    /** The pid of the server process this extension started, if it runs. */
+    get pid(): number | undefined {
+        return this.owned ? this.child?.pid : undefined;
+    }
+
     get owned(): boolean {
         return !!this.child && this.child.exitCode === null && this.child.signalCode === null;
     }

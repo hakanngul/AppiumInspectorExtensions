@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { run } from '../process';
+import { defaultAndroidSdk, run, toolEnv } from '../process';
 import { DeviceInfo, DeviceState } from './types';
 
 export interface AdbEntry {
@@ -83,7 +83,7 @@ export function adbCommand(setting: string, env: NodeJS.ProcessEnv = process.env
         return setting.trim();
     }
     const exe = process.platform === 'win32' ? 'adb.exe' : 'adb';
-    for (const root of [env.ANDROID_HOME, env.ANDROID_SDK_ROOT]) {
+    for (const root of [env.ANDROID_HOME, env.ANDROID_SDK_ROOT, defaultAndroidSdk()]) {
         if (root) {
             const candidate = path.join(root, 'platform-tools', exe);
             if (fs.existsSync(candidate)) {
@@ -92,6 +92,11 @@ export function adbCommand(setting: string, env: NodeJS.ProcessEnv = process.env
         }
     }
     return 'adb';
+}
+
+/** adbCommand with the environment the extension runs tools in (login shell ANDROID_HOME included). */
+export async function resolveAdb(setting: string): Promise<string> {
+    return adbCommand(setting, await toolEnv());
 }
 
 export async function listAndroid(adb: string): Promise<DeviceInfo[]> {

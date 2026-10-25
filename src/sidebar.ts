@@ -10,6 +10,8 @@ type Inbound =
     | { type: 'ready' | 'start' | 'stop' | 'log' | 'settings' | 'reloadDevices' | 'reloadDrivers' }
     | { type: 'boot'; id: string }
     | { type: 'inspect'; id?: string }
+    | { type: 'stopPort'; pid: number }
+    | { type: 'reloadPorts' }
     | { type: 'copy'; text: string; label: string };
 
 const STATUS_POLL_MS = 5_000;
@@ -45,7 +47,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider, vscode.Dispo
         clearInterval(this.poll);
         this.poll = undefined;
         if (visible) {
-            this.poll = setInterval(() => void this.controller.checkServer(), STATUS_POLL_MS);
+            this.poll = setInterval(() => {
+                void this.controller.checkServer();
+                void this.controller.refreshPorts();
+            }, STATUS_POLL_MS);
         }
     }
 
@@ -63,6 +68,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider, vscode.Dispo
                     info.state === 'stopped' && autoStart ? this.controller.start() : Promise.resolve(),
                     this.controller.current.drivers ? Promise.resolve() : this.controller.refreshAppium(),
                     this.controller.refreshDevices(),
+                    this.controller.refreshPorts(),
                 ]);
                 return;
             }
@@ -74,6 +80,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider, vscode.Dispo
                 return this.controller.output.show(true);
             case 'settings':
                 return vscode.commands.executeCommand('workbench.action.openSettings', `@ext:hakanngul.testfly-appium-inspector`);
+            case 'stopPort':
+                return this.controller.stopPort(m.pid);
+            case 'reloadPorts':
+                return this.controller.refreshPorts();
             case 'reloadDevices':
                 return this.controller.refreshDevices();
             case 'reloadDrivers':

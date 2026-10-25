@@ -53,6 +53,32 @@
         renderServer();
         renderDrivers();
         renderDevices();
+        renderPorts();
+    }
+
+    function renderPorts() {
+        const box = $('ports');
+        box.innerHTML = '';
+        if (state.portsError) {
+            box.append(el('p', 'hint', state.portsError));
+            return;
+        }
+        if (!state.ports || !state.ports.length) {
+            box.append(el('p', 'hint', 'No process holds an Appium port (server, WebDriverAgent 8100-8199, MJPEG 9100, UiAutomator2 8200-8299).'));
+            return;
+        }
+        for (const p of state.ports) {
+            const row = el('div', 'row');
+            row.title = `${p.command || 'process'} (pid ${p.pid}) listens on port ${p.port}`;
+            const port = el('span', 'port-num', String(p.port));
+            const text = el('div', 'text');
+            text.append(el('span', 'name', p.label), el('span', 'sub', `${p.command || 'process'} · pid ${p.pid}${p.own ? ' · started here' : ''}`));
+            const stop = el('button', 'danger-outline', 'Stop');
+            stop.title = p.own ? 'Stop the Appium server started here' : `Stop ${p.command || 'the process'} (pid ${p.pid}); you are asked first`;
+            stop.addEventListener('click', () => vscode.postMessage({ type: 'stopPort', pid: p.pid }));
+            row.append(port, text, stop);
+            box.append(row);
+        }
     }
 
     function renderServer() {
@@ -68,15 +94,15 @@
 
         const button = $('serverButton');
         const running = s.state === 'running' || s.state === 'external';
-        button.disabled = busy || s.state === 'external';
+        button.disabled = busy;
         button.classList.toggle('primary', !running);
-        button.classList.toggle('danger', s.state === 'running');
+        button.classList.toggle('danger', running);
         $('serverIcon').innerHTML = running ? ICONS.stop : ICONS.play;
         $('serverButtonText').textContent = s.state === 'starting' ? 'Starting Appium…'
             : s.state === 'stopping' ? 'Stopping Appium…'
-            : s.state === 'external' ? 'Started elsewhere'
+            : s.state === 'external' ? 'Stop Appium (started elsewhere)'
             : running ? 'Stop Appium' : 'Start Appium';
-        button.title = s.state === 'external' ? 'This server was not started by TestFly; stop it where it runs.' : '';
+        button.title = s.state === 'external' ? 'This server was started outside VS Code; you are asked before its process is stopped.' : '';
 
         const error = state.error || s.message;
         $('serverError').hidden = !error || running;
@@ -177,13 +203,14 @@
 
     $('serverButton').addEventListener('click', () => {
         const s = state && state.server.state;
-        vscode.postMessage({ type: s === 'running' ? 'stop' : 'start' });
+        vscode.postMessage({ type: s === 'running' || s === 'external' ? 'stop' : 'start' });
     });
     $('copyUrl').addEventListener('click', () => vscode.postMessage({ type: 'copy', text: url, label: 'server URL' }));
     $('showLog').addEventListener('click', () => vscode.postMessage({ type: 'log' }));
     $('reloadDevices').addEventListener('click', () => vscode.postMessage({ type: 'reloadDevices' }));
     $('reloadDrivers').addEventListener('click', () => vscode.postMessage({ type: 'reloadDrivers' }));
     $('openInspector').addEventListener('click', () => vscode.postMessage({ type: 'inspect' }));
+    $('reloadPorts').addEventListener('click', () => vscode.postMessage({ type: 'reloadPorts' }));
     document.addEventListener('click', e => {
         if (e.target.closest('[data-settings]')) vscode.postMessage({ type: 'settings' });
     });
