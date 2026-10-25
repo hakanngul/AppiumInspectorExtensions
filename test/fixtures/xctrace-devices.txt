@@ -1,0 +1,9 @@
+== Devices ==
+Hakan's MacBook Pro (00006000-0011223344556677)
+Hakan's iPhone (26.0.1) (00008140-001A2B3C4D5E801E)
+
+== Devices Offline ==
+Test iPad (18.6) (00008103-000A1B2C3D4E5F60)
+
+== Simulators ==
+iPhone 17 Simulator (26.0) (5F0C9F3E-1F2B-4C7D-9A1E-0B6B2E3D4A51)

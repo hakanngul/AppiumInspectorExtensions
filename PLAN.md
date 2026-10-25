@@ -1,7 +1,9 @@
-# TestFly - Appium Inspector: Dönüşüm Planı
+# TestFly - Appium Inspector: Plan
 
-Durum: **plan, henüz kod yazılmadı** (25 Ekim 2026). Bu belge, mobilecli tabanlı "TestFly Inspector" VS Code uzantısını
-"TestFly - Appium Inspector" uzantısına dönüştürme işinin tek kaynağıdır. Kod, sınıf, metot ve ayar adları İngilizce kalır.
+Durum: **Faz 0 ve Faz 1 tamam; sıradaki Faz 2** (25 Ekim 2026). İlerleme: Bölüm 16'daki faz başlıkları. Bu belge, Appium'a özgü yeni bir VS Code uzantısı olan
+"TestFly - Appium Inspector"ın tek kaynağıdır. Uzantı bu depoda sıfırdan yazılır; görünüm ve etkileşim tasarımı ayrı bir proje
+olan "TestFly Inspector" (mobilecli tabanlı) uzantısından alınır (Bölüm 4 ve 13). Kod, sınıf, metot ve ayar adları İngilizce
+kalır.
 
 Bu belgede iki tür ifade vardır:
 
@@ -13,7 +15,7 @@ Bu belgede iki tür ifade vardır:
 1. Hedef
 2. Kapsam
 3. Desteklenen sürümler (doğrulanmış)
-4. Mevcut durum
+4. Tasarım kaynağı (referans proje)
 5. Hedef mimari
 6. Appium istemcisi
 7. Appium sunucusu
@@ -22,7 +24,7 @@ Bu belgede iki tür ifade vardır:
 10. Page source ve ağaç
 11. Mobil locator'lar
 12. Java çıktısı (mobil)
-13. Browser Inspector'dan Selenium Inspector'a
+13. Tasarım: referans projeden alınanlar
 14. Arayüz
 15. Ayarlar, komutlar ve yeniden adlandırma
 16. Fazlar ve kabul ölçütleri
@@ -36,7 +38,7 @@ Bu belgede iki tür ifade vardır:
 
 ## 1. Hedef
 
-1. **Mobil (Appium Inspector):** mobilecli tamamen kalkar. Yerine Appium 3 (W3C WebDriver) tabanlı bir inspector gelir.
+1. **Appium Inspector:** Appium 3 (W3C WebDriver) tabanlı, yalnızca mobil bir inspector. mobilecli kullanılmaz.
    - Uzantı yerel bir Appium sunucusunu başlatır ya da çalışan bir sunucuya bağlanır.
    - Bağlı Android cihaz ve emülatörler, iOS simülatörleri ve gerçek iOS cihazları **otomatik** listelenir.
    - Uygulama `.apk`, `.app` ya da `.ipa` dosyasıyla, `appPackage`/`appActivity` ile, `bundleId` ile verilir ya da hiç
@@ -45,10 +47,13 @@ Bu belgede iki tür ifade vardır:
      doğrulanabilir.
    - Çıktı **Appium java-client** biçimindedir: PageFactory alanları (`@AndroidFindBy`, `@iOSXCUITFindBy`) ya da `AppiumBy`
      sabitleri. java-client 11.x (varsayılan) ve 9.x/10.x için doğru import'lar üretilir.
-2. **Browser (Selenium Inspector):** Tarayıcı yine CDP ile sürülür, ek bağımlılık yoktur. Çıktı **Selenium 4.x Java**
-   biçimindedir: `@FindBy` alanları ya da `By.*` ifadeleri.
-3. **Kimlik:** Uzantının adı **TestFly - Appium Inspector** olur. TestFly'a özgü kavramlar (`@MobileFind`, `MobileLocator`,
-   `Role`, `getByTestId`, `@eN` ref'leri) çıktıdan tamamen kalkar.
+2. **Appium sunucusu yönetimi:** Kenar çubuğundan Appium sunucusu başlatılır ve durdurulur; durumu, sürümü, yüklü sürücüler
+   ve bağlı cihazlar aynı yerde görünür.
+3. **Kimlik ve tasarım:** Uzantının adı **TestFly - Appium Inspector**. Görünüm referans projeyle aynı aileden gelir (renk
+   değişkenleri, araç çubuğu, kenar çubuğu, düğmeler), ama içerik Appium'a özgüdür. TestFly'a özgü kavramlar (`@MobileFind`,
+   `MobileLocator`, `Role`, `getByTestId`, `@eN` ref'leri) hiç yer almaz.
+4. **Tarayıcı yok:** Browser Inspector ve Selenium sayfa çıktısı bu uzantıda yoktur. "Selenium 4.x" desteği, üretilen
+   java-client kodunun Selenium 4.x ile uyumlu olması anlamına gelir (Bölüm 3, 12).
 
 ## 2. Kapsam
 
@@ -60,11 +65,11 @@ Bu belgede iki tür ifade vardır:
 | Yerel Appium sunucusu | Başlatma, durdurma, bağlanma, sürücü kontrolü | Appium'u ya da sürücüleri kurmak |
 | macOS, Linux | Var | |
 | Windows | Var: yalnızca Android | iOS (Windows'ta mümkün değil) |
-| Uzak sunucu (URL ve kimlik bilgisi) | Faz 7 | Bulut cihaz listeleri (BrowserStack vb.) |
-| Çalışan bir oturuma bağlanma | Faz 7 | |
+| Uzak sunucu (URL ve kimlik bilgisi) | Faz 6 | Bulut cihaz listeleri (BrowserStack vb.) |
+| Çalışan bir oturuma bağlanma | Faz 6 | |
 | Hybrid uygulama, WebView context | Yok | Native context'te kalınır |
 | Record (kayıt) | Var: PageFactory sınıfı ve akış metodu | Assert ya da test senaryosu üretimi |
-| Browser Inspector | Var: Selenium 4.x çıktısı | Tarayıcıyı WebDriver ile sürmek, Firefox |
+| Browser Inspector, web sayfası inceleme | | Yok (uzantı yalnızca Appium) |
 
 ## 3. Desteklenen sürümler (doğrulanmış)
 
@@ -106,26 +111,25 @@ Bu belgede iki tür ifade vardır:
 `/element/:eid/value`, `/appium/settings`, `/appium/commands`, `/appium/extensions`.
 Appium 3.8 CLI'si `--allow-cors`, `--address`, `--port` ve `--base-path` bayraklarını hâlâ destekliyor.
 
-## 4. Mevcut durum
+## 4. Tasarım kaynağı (referans proje)
 
-- `src/mobilecli.ts`: mobilecli JSON-RPC istemcisi ve sunucu başlatma. mobilecli'ye tek bağımlılık noktası.
-- `src/extension.ts`: `InspectorPanel`. Cihaz listesi, yenileme, tap/swipe/text/button akışı. Ağaç ve ekran görüntüsünü
-  paralel çeken bir `warm` mantığı var.
-- `media/selectors.js`: TestFly seçici üretimi ve çözümü, `@MobileFind` kod üretimi, `hitTest`, `toXml`. Webview'da global
-  olarak, Node testlerinde `require` ile kullanılıyor.
-- `media/inspector.js`, `body.html`, `inspector.css`: mobil webview. `ref` rozetleri, `Snapshot` sekmesi, "Copy CLI tap" ve
-  sunucu düğmesi mobilecli'ye bağlı.
-- `src/browserPanel.ts`, `cdp.ts`, `browsers.ts`, `media/browser*.{js,css,html}`, `media/page-agent.js`: Browser Inspector.
-  Locator çıktısı TestFly'ın `getByTestId`/`getByRole`/... biçiminde.
-- `src/sidebar.ts`, `media/sidebar*`: Mobile/Browser seçimi.
-- `src/webview.ts`: CSP tanımı `default-src 'none'; img-src … data:; script-src 'nonce-…'`. `connect-src` yok, dolayısıyla
-  webview ağ isteği yapamaz. Bu korunur: Appium'a giden bütün istekler host üzerinden gider.
-- `test/browser.test.js` ve `test/selectors.test.js` içinde TestFly monorepo'sundaki Java dosyalarını okuyan "mirror"
-  testleri var (`Role.java`, `Locator.java`, `MobileRole.java`).
-- Bağımlılıklar yalnızca devDependencies (`typescript`, `@types/*`, `@vscode/vsce`). Çalışma zamanı bağımlılığı **yok**;
-  paketleme `vsce package --no-dependencies` ile yapılıyor. **Bu özellik korunur.**
-- `engines.vscode: ^1.85.0` (Node 18 üzeri). Global `fetch` ve `AbortSignal.timeout` kullanılabilir.
-- `.vscodeignore` dosyasında `LICENSE.txt` yazıyor, oysa gerçek dosyanın adı `LICENSE`.
+Referans proje, ayrı bir depo olan mobilecli tabanlı "TestFly Inspector" uzantısıdır (`testfly/tools/vscode-mobile-inspector`).
+Bu uzantı ona bağlı değildir; yalnızca aşağıdakiler oradan örnek alınır ya da uyarlanarak kopyalanır:
+
+- `media/inspector.css`: renk değişkenleri (VS Code temasından), düğmeler, araç çubuğu, durum noktası, paneller, ağaç,
+  ayrıntı paneli, bildirim (toast) stilleri.
+- `media/sidebar.css`, `sidebar-body.html`, `sidebar.js`: kenar çubuğu düzeni (bölüm başlıkları, alanlar, anahtarlar,
+  geniş birincil düğme).
+- `media/body.html`, `inspector.js`: inceleme panelinin düzeni (araç çubuğu, ekran / ağaç / ayrıntı sütunları, Inspect / Tap /
+  Record kipleri, Back / Home / Swipe düğmeleri). Faz 3'te Appium'a göre yeniden yazılır.
+- `src/webview.ts`: sıkı CSP'li webview belgesi (`default-src 'none'`, nonce'lu betikler, `data:` görseller). `connect-src`
+  yoktur, dolayısıyla webview ağ isteği yapamaz; Appium'a giden bütün istekler host üzerinden gider.
+- Mühendislik kuralları: çalışma zamanı bağımlılığı yok (yalnızca devDependencies), `vsce package --no-dependencies`,
+  `node:test` ve sahte HTTP sunucusuyla testler, `engines.vscode: ^1.85.0` (Node 18 üzeri; global `fetch` ve
+  `AbortSignal.timeout` kullanılabilir).
+
+Alınmayanlar: mobilecli istemcisi, `@MobileFind`/TestFly seçici üretimi, `@eN` ref'leri, Snapshot sekmesi, Browser Inspector
+(CDP, tarayıcı bulma, sayfa ajanı), TestFly monorepo'suna bağlı "mirror" testleri.
 
 ## 5. Hedef mimari
 
@@ -145,24 +149,25 @@ src/
     index.ts              hepsini birleştirip DeviceInfo[] döndürür
   process.ts              platformdan bağımsız spawn/execFile ve süreç ağacını sonlandırma (Windows dahil)
   apps.ts                 .apk/.app/.ipa doğrulama
-  browserPanel.ts, cdp.ts, browsers.ts, sidebar.ts, webview.ts   (korunur, uyarlanır)
+  sidebar.ts              kenar çubuğu: Appium sunucusu, sürücüler, cihazlar
+  webview.ts              CSP'li webview belgesi (referans projeden)
 media/
   locators.js             (selectors.js yerine) mobil locator önerisi ve yerel sayım
-  codegen.js              Java çıktısı: AppiumBy, PageFactory, Record sınıfı, Selenium çıktısı
-  inspector.js/.css, body.html   mobil webview
-  browser.js, page-agent.js      Selenium locator önerileri
+  codegen.js              Java çıktısı: AppiumBy, PageFactory, Record sınıfı
+  inspector.js/.css, body.html   inceleme paneli
+  sidebar.js/.css, sidebar-body.html   kenar çubuğu
 test/
   fixtures/               gerçek page source ve komut çıktıları (android.xml, ios.xml, adb.txt, simctl.json, ...)
   *.test.js
 ```
 
-`locators.js` ve `codegen.js` saf JavaScript'tir. Webview'da global olarak, Node testlerinde `require` ile yüklenir; bugünkü
-`selectors.js` düzeni sürer.
+`locators.js` ve `codegen.js` saf JavaScript'tir. Webview'da global olarak, Node testlerinde `require` ile yüklenir
+(referans projedeki `selectors.js` düzeni).
 
 ### 5.1 Neden kendi W3C istemcimiz
 
 - Appium Inspector'ın kendisi de sıradan bir W3C istemcisidir. Cihazla konuşan iş Appium sunucusunda ve sürücülerdedir.
-- İhtiyacımız 15 civarında endpoint. Bunlar `fetch` ile yaklaşık 200 satırda yazılır ve mevcut `mobilecli.ts` ile aynı test
+- İhtiyacımız 15 civarında endpoint. Bunlar `fetch` ile yaklaşık 200 satırda yazılır ve referans projedeki `mobilecli.ts` ile aynı test
   yöntemine (yerel sahte HTTP sunucusu) uyar.
 - `webdriver` ya da `webdriverio` paketleri ağır ve ESM ağırlıklı. Eklenirlerse bundler gerekir ve `--no-dependencies`
   paketleme bozulur.
@@ -203,14 +208,14 @@ Sunucu URL'si `base-path` içerebilir (ör. `http://127.0.0.1:4723/wd/hub`). İs
 
 - W3C hata biçimi `{value:{error, message, stacktrace}}` şeklindedir. `AppiumError` bu üç alanı taşır. Kullanıcıya
   `message` gösterilir, `stacktrace` "TestFly Appium" çıktı kanalına yazılır.
-- `unreachable` (bağlantı yok ya da zaman aşımı) ile "sunucu hata döndürdü" ayrı tutulur (mevcut `RpcError.unreachable`
+- `unreachable` (bağlantı yok ya da zaman aşımı) ile "sunucu hata döndürdü" ayrı tutulur (referans projedeki `RpcError.unreachable`
   mantığı sürer).
 - `invalid session id` hatasında oturum kapanmış sayılır ve arayüzde "Oturum sona erdi, yeniden başlat" gösterilir.
 - Element bulma 404 ya da `no such element` döndürürse bu hata sayılmaz, 0 eşleşme olarak yorumlanır.
 
 ### 6.3 Komut sırası ve yetenek algılama
 
-- Appium bir oturumdaki komutları sunucuda zaten sırayla çalıştırır. Mevcut `warm` paralelliği kaldırılır. İstemci de
+- Appium bir oturumdaki komutları sunucuda zaten sırayla çalıştırır. Referans projedeki `warm` paralelliği alınmaz. İstemci
   kendi tarafında tek bir kuyruk tutar. Sıra şöyledir: önce ekran görüntüsü (hızlı geri bildirim için `shot` mesajı),
   sonra page source.
 - Oturum açıldıktan hemen sonra `/appium/extensions` çağrılır ve sürücünün sunduğu `mobile:` komutları bir kümeye alınır.
@@ -240,7 +245,7 @@ birime çevirir (Bölüm 10.3).
 
 - Appium'da kimlik doğrulaması yoktur. Uzantının başlattığı sunucu yalnızca `127.0.0.1` adresinde dinler.
   `--allow-insecure` ve `--relaxed-security` **asla** verilmez.
-- Uzak sunucu desteği geldiğinde (Faz 7) kullanıcı adı ve anahtar `SecretStorage`'da tutulur, loga ve çıktı kanalına yazılmaz.
+- Uzak sunucu desteği geldiğinde (Faz 6) kullanıcı adı ve anahtar `SecretStorage`'da tutulur, loga ve çıktı kanalına yazılmaz.
 - Capabilities çıktı kanalına yazılırken `appium:xcodeOrgId` gibi değerler olduğu gibi kalır, ama `*key*`, `*password*`,
   `*token*` içeren anahtarların değeri maskelenir.
 
@@ -368,7 +373,7 @@ interface ElementView {
 
 - Android `bounds` ve ekran görüntüsü pikseldir; `window/rect` de pikseldir.
 - iOS `x/y/width/height` ve `window/rect` point'tir; ekran görüntüsü pikseldir.
-- Webview, overlay'i `rect / window.rect` yüzdesiyle yerleştirir. Bu, birimden bağımsızdır; mevcut yüzdelik yerleştirme
+- Webview, overlay'i `rect / window.rect` yüzdesiyle yerleştirir. Bu, birimden bağımsızdır; referans projedeki yüzdelik yerleştirme
   mantığı korunur.
 - Android'de yatay ekran ve kesik (notch) durumunda `window/rect` ile ekran görüntüsünün en-boy oranı farklı olabilir.
   Fark %2'yi aşarsa uyarı gösterilir. Faz 2'de **doğrulanacak**.
@@ -408,13 +413,13 @@ interface ElementView {
 - Yerel sayım, webview'daki DOM üzerinde anında yapılır.
 - Her önerinin yanında **Verify** düğmesi bulunur. Webview isteği host'a iletir, host da `POST /elements` çağırır. Sonuç
   "✓ unique", "N matches" ya da "no match" olarak gösterilir. Sunucunun sonucu her zaman yerel sayımın önüne geçer.
-- Benzersiz öneriler en üstte sıralanır (mevcut davranış).
+- Benzersiz öneriler en üstte sıralanır (referans projedeki davranış).
 - Yerel sayım ile sunucu sayısı farklı çıkarsa öneri satırında "⚠ server: N" gösterilir.
 
 ### 11.4 Kaçış
 
 - **Java dizgesi:** `\`, `"`, satır sonu, sekme ve `\uXXXX` olarak kontrol karakterleri.
-- **XPath:** Değer `'` içeriyorsa `"…"` kullanılır; ikisini de içeriyorsa `concat()` (mevcut `quote()` mantığı).
+- **XPath:** Değer `'` içeriyorsa `"…"` kullanılır; ikisini de içeriyorsa `concat()` (referans projedeki `quote()` mantığı).
 - **Predicate:** `'` ve `\` kaçışlanır.
 - **Class chain:** Backtick içeren değerler için class chain önerilmez.
 - **UiSelector:** `"` ve `\` kaçışlanır. Değer, Java dizgesi içinde ikinci kez kaçışlanır.
@@ -469,7 +474,7 @@ private WebElement btnLogin;
 ```
 
 - İlk sürümde yalnızca aktif oturumun platformu üretilir.
-- Faz 7'de "iki platformu birleştir" eklenir: kullanıcı aynı ekranı iki platformda incelediyse iki annotation tek alanda
+- Faz 6'da "iki platformu birleştir" eklenir: kullanıcı aynı ekranı iki platformda incelediyse iki annotation tek alanda
   birleşir.
 
 ### 12.4 Alan adı üretimi
@@ -524,38 +529,17 @@ public class RecordedPage {
 - `TouchAction` hiçbir hedefte kullanılmaz.
 - Import'lar yalnızca kullanılan sınıflar için ve alfabetik sırada üretilir.
 
-## 13. Browser Inspector'dan Selenium Inspector'a
+## 13. Tasarım: referans projeden alınanlar
 
-- CDP ile sürme (`browserPanel.ts`, `cdp.ts`, `browsers.ts`) **değişmez**.
-- `page-agent.js` locator önerileri Selenium 4.x stratejilerine çevrilir. Sıra şöyledir:
-
-| # | Ne zaman | `@FindBy` | `By` |
-|---|---|---|---|
-| 1 | Benzersiz `id` | `@FindBy(id = "x")` | `By.id("x")` |
-| 2 | Benzersiz `name` | `@FindBy(name = "x")` | `By.name("x")` |
-| 3 | Test id özniteliği (`testIdAttribute` ayarı) | `@FindBy(css = "[data-testid='x']")` | `By.cssSelector("[data-testid='x']")` |
-| 4 | `aria-label`, `placeholder`, `title`, `alt` | `@FindBy(css = "input[placeholder='E-mail']")` | `By.cssSelector(…)` |
-| 5 | `<a>` ve benzersiz metin | `@FindBy(linkText = "…")` / `partialLinkText` | `By.linkText(…)` / `By.partialLinkText(…)` |
-| 6 | Benzersiz kısa CSS | `@FindBy(css = "…")` | `By.cssSelector(…)` |
-| 7 | Metin tabanlı XPath | `@FindBy(xpath = "//button[normalize-space()='Sign in']")` | `By.xpath(…)` |
-
-- **Sayım:** Sayfada hesaplanır (mevcut mantık). `linkText` sayımı Selenium'un kuralına göre yapılır: görünen metin, kırpılmış
-  ve tam eşitlik. Rol tablosu ve erişilebilir ad hesabı yalnızca **ağaçta element adını göstermek** için kalır; locator
-  üretiminde kullanılmaz.
-- **iframe:** Element bir iframe içindeyse çıktının başına bir yorum ve
-  `driver.switchTo().frame(driver.findElement(By.cssSelector("…")));` satırı eklenir.
-- **Shadow DOM:** Element açık (open) bir shadow root içindeyse XPath önerilmez. Çıktı Selenium 4'ün `getShadowRoot()` API'si
-  ile yazılır:
-  `driver.findElement(By.cssSelector("my-host")).getShadowRoot().findElement(By.cssSelector("button"))`.
-  Kapalı (closed) shadow root için uyarı gösterilir.
-- **Alan çıktısı:** `@FindBy(…) private WebElement signIn;` ve sınıf iskeletinde `PageFactory.initElements(driver, this);`
-  (`org.openqa.selenium.support.PageFactory`, `selenium-java` 4.x). `codegen.style = by` seçilirse
-  `private static final By SIGN_IN = By.id("…");` üretilir.
-- Selenium 4.x'te `@FindBy`, `By.*`, `getShadowRoot()` ve `switchTo().frame()` bulunur; çıktı yalnızca bu API'leri
-  kullanır.
-- **Silinecek testler:** `test/browser.test.js` ve `test/selectors.test.js` içinde TestFly monorepo dosyalarını okuyan
-  "mirror" testleri kaldırılır.
-- Tarayıcıyı WebDriver ile sürmek kapsam **dışıdır**.
+- **Tema:** Renkler VS Code temasından gelir (`--vscode-*` değişkenleri); açık, koyu ve yüksek karşıtlık temaları kendiliğinden
+  desteklenir. Değişken adları ve yedek değerler referans projeyle aynıdır.
+- **Simgeler:** Satır içi SVG, 16×16, `stroke: currentColor`. Etkinlik çubuğu simgesi Appium'a göre yeniden çizilir.
+- **Kenar çubuğu:** Üstte "Appium server" kartı (durum noktası, sürüm, adres, Start/Stop, Show log), altında "Drivers" ve
+  "Devices" bölümleri, en altta "Open Inspector" birincil düğmesi. Bölüm başlıkları, alanlar ve geniş düğme referans
+  projedeki `sidebar.css` stillerini kullanır.
+- **İnceleme paneli:** Referans projedeki üç sütunlu düzen (ekran, ağaç, ayrıntı), araç çubuğu ve kipler korunur; içerik
+  Bölüm 14'teki gibi Appium'a göre değişir.
+- **Durum dili:** Nokta renkleri aynı anlamı taşır: yeşil hazır, mavi yanıp sönen meşgul, kırmızı hata ya da kapalı, gri bilinmiyor.
 
 ## 14. Arayüz
 
@@ -592,28 +576,26 @@ public class RecordedPage {
 ### 14.5 Genel
 
 - Tek etkin oturum vardır. İkinci bir panel açılırsa mevcut panel öne getirilir.
-- Kenar çubuğunda Mobil/Browser seçimi kalır. Metinler "TestFly - Appium Inspector"e göre güncellenir.
+- Kenar çubuğu yalnızca Appium içindir (Bölüm 13); Mobile/Browser seçimi yoktur.
 
-## 15. Ayarlar, komutlar ve yeniden adlandırma
+## 15. Kimlik, komutlar ve ayarlar
 
 ### 15.1 Kimlik
 
-| Eski | Yeni |
+| Alan | Değer |
 |---|---|
-| `name`: `testfly-mobile-inspector` | `testfly-appium-inspector` |
-| `displayName`: TestFly Inspector | TestFly - Appium Inspector |
-| Komutlar `testflyInspector.*` | `testflyAppiumInspector.open`, `.openBrowser`, `.startServer`, `.stopServer` |
-| Ayarlar `testflyInspector.*` | `testflyAppiumInspector.*` (tek ad alanı; Selenium ayarları da burada) |
-| View container ve id `testflyInspector` | `testflyAppiumInspector`, `testflyAppiumInspector.home` |
-| `globalState` anahtarları | `testflyAppiumInspector.recentUrls`, `testflyAppiumInspector.profiles` |
-| Sürüm `0.3.2` | `0.1.0` |
+| `name` | `testfly-appium-inspector` (uzantı kimliği `hakanngul.testfly-appium-inspector`) |
+| `displayName` | TestFly - Appium Inspector |
+| Sürüm | `0.1.0` |
 | `repository` | `https://github.com/hakanngul/AppiumInspectorExtensions.git` |
-| `keywords` | `mobilecli` çıkar; `selenium`, `pagefactory`, `uiautomator2`, `xcuitest` eklenir |
-| `dist/testfly-mobile-inspector-0.3.2.vsix` | Silinir; `.vsix` artık depoya konmaz |
-| README.md, README_tr.md | Baştan yazılır; ikisi aynı içerikte tutulur |
+| Komutlar | `testflyAppiumInspector.open`, `.startServer`, `.stopServer`, `.showServerLog`, `.refreshDevices` |
+| Ayarlar | `testflyAppiumInspector.*` |
+| View container ve view | `testflyAppiumInspector`, `testflyAppiumInspector.home` |
+| `globalState` | `testflyAppiumInspector.profiles` |
+| `keywords` | `appium`, `inspector`, `android`, `ios`, `uiautomator2`, `xcuitest`, `pagefactory`, `locator` |
+| README | README.md ve README_tr.md, aynı içerikte |
 
-`name` değişince uzantı kimliği (`hakanngul.testfly-appium-inspector`) de değişir. Bu, yeni bir uzantı demektir. Eski
-ayarlar taşınmaz; README bunu belirtir.
+Referans projeyle aynı anda kurulabilir; kimlikleri ve ayar ad alanları farklıdır.
 
 ### 15.2 Ayarlar (`testflyAppiumInspector.*`)
 
@@ -625,41 +607,41 @@ ayarlar taşınmaz; README bunu belirtir.
 | `appium.basePath` | `/` | `--base-path` |
 | `appium.allowCors` | `true` | `--allow-cors` eklenir |
 | `appium.autoStart` | `false` | Panel açılınca sunucuyu başlat |
-| `appium.serverUrl` | (boş) | Faz 7: uzak sunucu |
+| `appium.serverUrl` | (boş) | Faz 6: uzak sunucu |
 | `adbPath` | (boş: PATH ya da `ANDROID_HOME`) | |
 | `ios.xcodeOrgId`, `ios.xcodeSigningId` | (boş), `Apple Development` | Gerçek iOS imzalama |
 | `autoRefreshAfterAction` | `true` | |
 | `codegen.javaClient` | `11` | `11` ya da `9-10` |
-| `codegen.style` | `pageFactory` | `pageFactory`, `appiumBy` (mobil); `pageFactory`, `by` (browser) |
-| `browserPath` | (boş) | Chrome, Edge ya da Chromium |
-| `testIdAttribute` | `data-testid` | Browser test id özniteliği |
-
-**Kaldırılanlar:** `serverUrl` (mobilecli), `mobilecliPath`, `autoStartServer`.
-
-**Küçük düzeltme:** `.vscodeignore` dosyasındaki `LICENSE.txt` satırı kaldırılır, çünkü gerçek dosya adı `LICENSE` ve
-paketlenmesi gerekir.
+| `codegen.style` | `pageFactory` | `pageFactory` ya da `appiumBy` |
 
 ## 16. Fazlar ve kabul ölçütleri
 
 Her fazın sonunda `npm run build` ve `npm test` çalıştırılır. İkisinden biri geçmezse faz tamamlanmış sayılmaz. Her faz ayrı
 bir commit ile `AppiumInspectorExtensions` deposuna gider.
 
-### Faz 0: Hazırlık
+### Faz 0: Hazırlık (tamam)
 
-- Mevcut uzantı klasörü `AppiumInspectorExtensions` deposuna kopyalanır ve **değiştirilmeden** ilk commit olarak atılır.
-  Bu, tek geri dönüş noktasıdır.
-- `npm ci` ve `npm test` çalıştırılır; sonuç taban çizgisi olarak commit mesajına yazılır.
+- Yeni uzantının iskeleti kurulur: `package.json`, `tsconfig.json`, `.vscodeignore`, `.gitignore`, `LICENSE`, README'ler.
+- Tasarım dosyaları referans projeden alınır (Bölüm 4): `webview.ts`, `inspector.css` ve kenar çubuğu stilleri.
 - Ortam kontrolü: `node -v` (≥ 20.19), `appium -v` (3.x), `appium driver list --installed`, `adb version`,
   `xcrun simctl help`.
 - Gerçek fixture'lar toplanır: `adb devices -l`, `getprop`, `simctl list devices --json`. Appium elle başlatılıp
-  Android emülatörden ve iOS simülatörden page source, ekran görüntüsü ve `window/rect` alınır.
-- **Çıktı:** `test/fixtures/*`, taban çizgisi test sonucu, ortam sürümleri.
+  Android emülatörden ve iOS simülatörden page source, ekran görüntüsü ve `window/rect` alınır. Bunlar kullanıcının
+  makinesinde toplanır; o zamana kadar testler belgelenmiş çıktı biçimlerinden yazılmış fixture'larla çalışır.
+- **Çıktı:** Derlenen boş uzantı, `test/fixtures/*`, ortam sürümleri.
 
-### Faz 1: Çekirdek (arayüz yok, tamamen testli)
+### Faz 1: Çekirdek ve kenar çubuğu (tamam)
 
-- `appium/client.ts`, `appium/capabilities.ts`, `devices/*`, `apps.ts`, `process.ts`, host tarafı `sanitizeXml`.
+- `appium/client.ts`, `appium/server.ts`, `appium/capabilities.ts`, `devices/*`, `apps.ts`, `process.ts`, host tarafı
+  `sanitizeXml`.
+- Kenar çubuğu: Appium sunucusunu başlat/durdur, durum ve sürüm, yüklü sürücüler, cihaz listesi, iOS simülatörü boot.
 - İstemci sahte bir W3C sunucusuyla test edilir; ayrıştırıcılar fixture'larla test edilir.
 - **Kabul:** Testler yeşil. Android ve iOS fixture'larında düğüm sayısı ve `rect` değerleri elle kontrol edilmiş.
+- **Sonuç (25 Ekim 2026):** 34 birim testi yeşil. Gerçek Appium 3.8.0 (UiAutomator2 8.7.0 kurulu) ile başlat, `/status`,
+  durdur denendi. Uzantı VS Code 1.85.2 içinde (Xvfb) çalıştırıldı: komutlar kayıtlı, Start/Stop çalışıyor, VS Code
+  kapanınca başlatılan sunucu duruyor. Cihaz ayrıştırıcıları belgelenmiş çıktı biçimlerinden yazılmış fixture'larla test
+  edildi; gerçek `adb`/`simctl`/`devicectl` çıktıları ve page source fixture'ları kullanıcının makinesinde toplanacak
+  (Faz 0'ın bu maddesi açık). macOS ve Windows'ta henüz çalıştırılmadı.
 
 ### Faz 2: Sunucu, oturum ve extension host
 
@@ -685,21 +667,13 @@ bir commit ile `AppiumInspectorExtensions` deposuna gider.
   - En az bir Android ve bir iOS ekranı için önerilen locator'lar cihazda `findElements` ile doğrulanır; yerel sayımla
     sunucu sayısı uyuşur.
 
-### Faz 5: Browser'dan Selenium'a
+### Faz 5: Paketleme ve belgeler
 
-- `page-agent.js` locator'ları, `browser.js` çıktısı, iframe ve shadow DOM çıktısı, TestFly'a bağlı testlerin temizliği.
-- **Kabul:** `npm test` (tarayıcı testi dahil) yeşil. Önerilen locator'lar örnek bir sayfada (`test/fixtures/page.html`)
-  sayfanın kendisinde doğru elementi bulur.
-- Bu faz mobil fazlardan bağımsızdır; istenirse Faz 1'den önce yapılabilir.
-
-### Faz 6: Yeniden adlandırma ve paketleme
-
-- `package.json`, ayar ve komut kimlikleri, kenar çubuğu metinleri, README (TR ve EN), ikon ve etkinlik çubuğu metinleri,
-  `.vscodeignore`.
+- README (TR ve EN), ikon, mağaza açıklaması, `.vscodeignore` son kontrolü.
 - **Kabul:** `npm run package` bir `.vsix` üretir. Bu paket temiz bir VS Code profiline kurulur; komutlar ve ayarlar görünür;
-  `mobilecli` kelimesi paketin hiçbir yerinde geçmez.
+  `mobilecli` ve `@MobileFind` paketin hiçbir yerinde geçmez.
 
-### Faz 7 (sonra)
+### Faz 6 (sonra)
 
 Uzak sunucu ve bulut sağlayıcılar, çalışan bir oturuma bağlanma, iki platformu tek alanda birleştirme, WebView context.
 
@@ -770,12 +744,12 @@ testleri bu bilgilere karşı yazılır.
 **Verilmiş kararlar:**
 
 1. Sürüm `0.1.0` (yeni ürün; cihazda doğrulanana kadar 1.0 denmez).
-2. Depo `hakanngul/AppiumInspectorExtensions`. Faz 0'da mevcut hal ilk commit olarak atılır.
+2. Depo `hakanngul/AppiumInspectorExtensions`. Uzantı burada sıfırdan yazılır; referans projeden yalnızca tasarım alınır.
 3. Java hedefi java-client 11.x (varsayılan) ve 9.x/10.x. Selenium 4.x.
 4. Sunucu Appium 3.x; sürücüler UiAutomator2 8.x ve XCUITest 12.x.
 5. Hareketlerde birincil yol W3C Actions.
 6. XML tek yerde (webview'da `DOMParser` ile) ayrıştırılır.
-7. Tarayıcıyı Selenium ile sürmek kapsam dışı; yalnızca çıktı Selenium.
+7. Uzantı yalnızca Appium içindir; Browser Inspector yoktur.
 
 8. Windows'ta Android, kullanıcının Windows makinesinde Faz 2'de elle doğrulanır.
 9. Uzantı deposunda Java, Maven ya da CI yoktur. Üretilen Java metni `node:test` ile doğrulanır.
@@ -804,13 +778,11 @@ Ayarlar > Genel > VPN ve Cihaz Yönetimi altından geliştiriciye güvenilmesi g
 
 ## 21. Faz 0 ve Faz 1 iş listesi
 
-1. Uzantı klasörünü depoya kopyala, değiştirmeden commit at.
-2. `npm ci` ve `npm test` çalıştır; taban çizgisini kaydet.
-3. Ortam sürümlerini kaydet (`node`, `appium`, sürücüler, `adb`, Xcode).
-4. Appium'u elle başlat. Android emülatörden ve iOS simülatörden page source, ekran görüntüsü ve `window/rect` alıp
-   `test/fixtures` altına kaydet. Aynı şeyi `adb`, `simctl` ve (varsa) `devicectl` çıktıları için yap.
-5. `client.ts` ve sahte W3C sunucu testleri.
-6. `capabilities.ts` ve testleri.
-7. `devices/*` ve fixture testleri.
-8. `process.ts` ve sahte süreç testleri.
-9. `sanitizeXml` ve `test/xml.js` okuyucusu.
+1. İskelet ve tasarım dosyaları (referans projeden).
+2. `client.ts` ve sahte W3C sunucu testleri.
+3. `process.ts`, `server.ts`; sahte süreç testleri ve gerçek `appium` 3.x ile başlat/durdur denemesi.
+4. `devices/*` ve fixture testleri.
+5. `capabilities.ts`, `apps.ts` ve testleri.
+6. Kenar çubuğu: sunucu kartı, sürücüler, cihazlar.
+7. Ortam sürümlerini ve gerçek fixture'ları kullanıcının makinesinde topla (`adb`, `simctl`, `devicectl`, page source).
+8. `npm run build`, `npm test`, `npm run package`.

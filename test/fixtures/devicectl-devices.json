@@ -1,0 +1,58 @@
+{
+  "info" : {
+    "arguments" : [ "devicectl", "list", "devices", "--json-output", "/tmp/devices.json" ],
+    "commandType" : "devicectl.list.devices",
+    "outcome" : "success",
+    "version" : "477.29"
+  },
+  "result" : {
+    "devices" : [
+      {
+        "capabilities" : [ ],
+        "connectionProperties" : {
+          "pairingState" : "paired",
+          "transportType" : "wired",
+          "tunnelState" : "connected"
+        },
+        "deviceProperties" : {
+          "name" : "Hakan's iPhone",
+          "osBuildUpdate" : "23A341",
+          "osVersionNumber" : "26.0.1"
+        },
+        "hardwareProperties" : {
+          "deviceType" : "iPhone",
+          "marketingName" : "iPhone 16 Pro",
+          "platform" : "iOS",
+          "reality" : "physical",
+          "udid" : "00008140-001A2B3C4D5E801E"
+        },
+        "identifier" : "3C1A9E52-6B7D-4F21-9D0E-7A8B9C0D1E2F"
+      },
+      {
+        "capabilities" : [ ],
+        "connectionProperties" : {
+          "pairingState" : "unpaired",
+          "tunnelState" : "unavailable"
+        },
+        "deviceProperties" : {
+          "name" : "Test iPad",
+          "osVersionNumber" : "18.6"
+        },
+        "hardwareProperties" : {
+          "deviceType" : "iPad",
+          "marketingName" : "iPad Air",
+          "platform" : "iOS",
+          "reality" : "physical",
+          "udid" : "00008103-000A1B2C3D4E5F60"
+        },
+        "identifier" : "0F1E2D3C-4B5A-6978-8796-A5B4C3D2E1F0"
+      },
+      {
+        "connectionProperties" : { "pairingState" : "paired", "tunnelState" : "disconnected" },
+        "deviceProperties" : { "name" : "Living Room", "osVersionNumber" : "26.0" },
+        "hardwareProperties" : { "platform" : "tvOS", "reality" : "physical", "udid" : "00008110-0000000000000000" },
+        "identifier" : "A0A0A0A0-B1B1-C2C2-D3D3-E4E4E4E4E4E4"
+      }
+    ]
+  }
+}
