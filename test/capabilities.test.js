@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { buildCapabilities, capabilityProblems, parseExtraCapabilities, prefixed } = require('../out/appium/capabilities.js');
+const { buildCapabilities, capabilityProblems, capabilityWarnings, parseExtraCapabilities, prefixed } = require('../out/appium/capabilities.js');
 const { appFileKind, checkAppFile } = require('../out/apps.js');
 const { sanitizeXml } = require('../out/appium/source.js');
 
@@ -61,7 +61,11 @@ test('problems are found before Appium is asked', () => {
     assert.match(capabilityProblems({ device: emulator, app: { kind: 'installed', appPackage: '' } })[0], /app package/);
     assert.match(capabilityProblems({ device: emulator, app: { kind: 'installed', appPackage: 'not a package' } })[0], /not a valid Android package/);
     assert.match(capabilityProblems({ device: simulator, app: { kind: 'installed' } })[0], /bundle id/);
-    assert.match(capabilityProblems({ device: iphone, app: { kind: 'none' } })[0], /Team ID/);
+    assert.deepStrictEqual(capabilityProblems({ device: iphone, app: { kind: 'none' } }), [], 'a missing Team ID does not block');
+    assert.match(capabilityWarnings({ device: iphone, app: { kind: 'none' } })[0], /No Team ID set/);
+    assert.deepStrictEqual(capabilityWarnings({ device: iphone, app: { kind: 'none' }, signing: { xcodeOrgId: 'ABCDE12345' } }), []);
+    assert.deepStrictEqual(capabilityWarnings({ device: iphone, app: { kind: 'none' }, extra: { usePreinstalledWDA: true } }), [], 'WDA already on the device');
+    assert.deepStrictEqual(capabilityWarnings({ device: simulator, app: { kind: 'none' } }), []);
     assert.match(capabilityProblems({ device: { ...emulator, state: 'offline', reason: 'Reconnect it.' }, app: { kind: 'none' } })[0], /Reconnect/);
     assert.match(capabilityProblems({ device: emulator, app: { kind: 'file', path: ' ' } })[0], /Choose an app file/);
 });
