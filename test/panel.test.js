@@ -87,7 +87,7 @@ const until = async (pred, ms = 3000) => {
 
 test('form, session, screen, tap, verify and end through the panel', async () => {
     const { server, calls, port } = await fakeAppium();
-    config = { 'appium.port': port, autoRefreshAfterAction: false };
+    config = { 'appium.port': port, autoRefreshAfterAction: false, adbPath: path.join(__dirname, 'fixtures', 'fake-adb.js') };
     const controller = new AppiumController();
     const context = { extensionUri: { fsPath: path.join(__dirname, '..') }, extensionPath: path.join(__dirname, '..'), globalState: { get: (_k, d) => d, update: () => Promise.resolve() } };
     try {
@@ -99,6 +99,13 @@ test('form, session, screen, tap, verify and end through the panel', async () =>
         await receive({ type: 'ready' });
         assert.ok(posted.some(m => m.type === 'environment' && m.devices.length === 1));
         assert.ok(posted.some(m => m.type === 'chooseDevice' && m.id === 'emulator-5554'));
+
+        // installed apps and the launcher activity, through adb
+        await receive({ type: 'listApps', deviceId: 'emulator-5554' });
+        const apps = posted.filter(m => m.type === 'apps').pop();
+        assert.ok(apps.apps.some(a => a.id === 'com.starlettech.letsbet.stage'), JSON.stringify(apps));
+        await receive({ type: 'resolveActivity', deviceId: 'emulator-5554', package: 'com.starlettech.letsbet.stage' });
+        assert.strictEqual(posted.filter(m => m.type === 'activity').pop().activity, 'com.starlettech.letsbet.ui.splash.SplashActivity');
 
         const form = { deviceId: 'emulator-5554', app: { kind: 'installed', appPackage: 'com.example.shop', appActivity: '' }, extra: '{"autoGrantPermissions": true}' };
         await receive({ type: 'preview', form });

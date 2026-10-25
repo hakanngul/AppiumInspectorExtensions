@@ -7,6 +7,7 @@ import { Direction } from './appium/gestures';
 import { InspectorSession, Locator } from './appium/session';
 import { checkAppFile } from './apps';
 import { AppiumController, ControllerState, SECTION } from './controller';
+import { InstalledApp, launchActivity, listInstalledApps } from './devices/installedApps';
 import { DeviceInfo } from './devices/types';
 import { webviewHtml } from './webview';
 
@@ -31,6 +32,8 @@ type Inbound =
     | { type: 'pickApp'; platform: string; kind: string }
     | { type: 'server'; action: 'start' | 'stop' }
     | { type: 'reloadDevices' }
+    | { type: 'listApps'; deviceId: string; force?: boolean }
+    | { type: 'resolveActivity'; deviceId: string; package: string }
     | { type: 'boot'; id: string }
     | { type: 'refresh' }
     | { type: 'tap' | 'longPress'; x: number; y: number }
@@ -50,6 +53,8 @@ export class InspectorPanel {
     private readonly panel: vscode.WebviewPanel;
     private session?: InspectorSession;
     private busy = false;
+    /** Installed apps per device, read once per panel unless reloaded. */
+    private readonly apps = new Map<string, Promise<InstalledApp[]>>();
     private readonly subscriptions: vscode.Disposable[] = [];
 
     static show(context: vscode.ExtensionContext, controller: AppiumController, deviceId?: string) {
@@ -146,6 +151,12 @@ export class InspectorPanel {
                     return m.action === 'start' ? await this.controller.start() : await this.controller.stop();
                 case 'reloadDevices':
                     return await this.controller.refreshDevices();
+                case 'listApps':
+                    return await this.listApps(m.deviceId, m.force);
+                case 'resolveActivity': {
+                    const activity = await launchActivity(vscode.workspace.getConfiguration(SECTION).get('adbPath', ''), m.deviceId, m.package).catch(() => undefined);
+                    return this.post({ type: 'activity', deviceId: m.deviceId, package: m.package, activity });
+                }
                 case 'boot':
                     return await this.controller.boot(m.id);
                 case 'refresh':
@@ -286,6 +297,24 @@ export class InspectorPanel {
         }
         if (!quiet) {
             this.post({ type: 'sessionEnded' });
+        }
+    }
+
+    /** Posts the apps installed on a ready device; a failure is shown under the field, not as an error. */
+    private async listApps(deviceId: string, force = false) {
+        const device = this.controller.current.devices.find(d => d.id === deviceId);
+        if (!device || device.state !== 'ready') {
+            return this.post({ type: 'apps', deviceId, apps: [], error: device ? 'Boot the device to list its apps.' : '' });
+        }
+        if (force || !this.apps.has(deviceId)) {
+            this.apps.set(deviceId, listInstalledApps(device, vscode.workspace.getConfiguration(SECTION).get('adbPath', '')));
+        }
+        try {
+            this.post({ type: 'apps', deviceId, apps: await this.apps.get(deviceId)! });
+        } catch (e) {
+            this.apps.delete(deviceId);
+            this.controller.output.appendLine(`Listing apps on ${device.name} failed: ${(e as Error).message}`);
+            this.post({ type: 'apps', deviceId, apps: [], error: `Could not list the apps: ${(e as Error).message}` });
         }
     }
 

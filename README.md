@@ -5,7 +5,7 @@
 A VS Code extension for Appium 3: start and stop the Appium server, see the installed drivers and every Android and iOS
 device in one place, and inspect native app screens with ready-to-paste Appium java-client locators.
 
-> **Status: 0.1.0, first test release.** Everything below is built and covered by tests against fake Appium servers and
+> **Status: 0.2.0, test release.** Everything below is built and covered by tests against fake Appium servers and
 > a real Appium 3.8.0 server start/stop; sessions on real emulators, simulators and devices still need a first run on a
 > machine that has them. See [PLAN.md](PLAN.md).
 
@@ -24,6 +24,9 @@ device in one place, and inspect native app screens with ready-to-paste Appium j
     (`.apk`, `.app`, `.ipa`), or the current screen without an app. A live preview shows the capabilities; advanced JSON
     capabilities and saved profiles are supported. The app is not reinstalled or reset (`noReset`) and keeps running when
     the session ends (`shouldTerminateApp: false`).
+  - **Installed apps:** the apps on the chosen device are read automatically (`adb shell pm list packages -3`,
+    `xcrun simctl listapps`, `xcrun devicectl device info apps`) and offered in the package / bundle id field; with a
+    single app of your own it is filled in. On Android the launcher activity is shown as the activity hint.
   - **Screen and tree:** screenshot with element outlines, UI tree, Page Source tab with the raw XML, element attributes.
   - **Actions:** tap, long press, type, swipe, back (Android) and home, through W3C actions with `mobile:` fallbacks.
   - **Locators:** id, accessibility id, UiAutomator, iOS predicate, iOS class chain, class name and XPath, with exact
@@ -44,7 +47,7 @@ The generated classes were compiled with `javac` against java-client 11.0.0 and 
 ## Install
 
 ```bash
-code --install-extension testfly-appium-inspector-0.1.0.vsix
+code --install-extension testfly-appium-inspector-0.2.0.vsix
 ```
 
 Or in VS Code: Extensions view > `...` > *Install from VSIX...*. Then open the **TestFly Appium** view in the activity

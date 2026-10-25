@@ -1,0 +1,16 @@
+{
+  "info" : {
+    "arguments" : [ "devicectl", "device", "info", "apps", "--device", "00008140-001A2B3C4D5E801E", "--quiet", "--json-output", "-" ],
+    "commandType" : "devicectl.device.info.apps",
+    "outcome" : "success",
+    "version" : "477.29"
+  },
+  "result" : {
+    "apps" : [
+      { "appClip" : false, "builtByDeveloper" : true, "bundleIdentifier" : "com.nesine.new-bet-dev", "bundleVersion" : "4211", "defaultApp" : false, "hidden" : false, "internalApp" : false, "name" : "Nesine Dev", "removable" : true, "url" : "file:///private/var/containers/Bundle/Application/1/NewBet.app/", "version" : "5.2.0" },
+      { "appClip" : false, "builtByDeveloper" : false, "bundleIdentifier" : "com.apple.mobilesafari", "bundleVersion" : "8621", "defaultApp" : true, "hidden" : false, "internalApp" : false, "name" : "Safari", "removable" : false, "url" : "file:///Applications/MobileSafari.app/", "version" : "26.0" },
+      { "appClip" : true, "builtByDeveloper" : false, "bundleIdentifier" : "com.example.clip.Clip", "bundleVersion" : "1", "defaultApp" : false, "hidden" : false, "internalApp" : false, "name" : "Clip", "removable" : true, "url" : "file:///x/", "version" : "1.0" }
+    ],
+    "deviceIdentifier" : "3C1A9E52-6B7D-4F21-9D0E-7A8B9C0D1E2F"
+  }
+}

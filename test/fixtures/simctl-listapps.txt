@@ -1,0 +1,38 @@
+{
+    "com.apple.Preferences" =     {
+        ApplicationType = System;
+        Bundle = "file:///Library/Developer/CoreSimulator/Volumes/iOS_23A343/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS%2026.0.simruntime/Contents/Resources/RuntimeRoot/Applications/Preferences.app/";
+        CFBundleDisplayName = Settings;
+        CFBundleExecutable = Preferences;
+        CFBundleIdentifier = "com.apple.Preferences";
+        CFBundleName = Preferences;
+        CFBundleVersion = "1.0";
+        GroupContainers =         {
+            "243LU875E5.groups.com.apple.podcasts" = "file:///Users/dev/Library/Developer/CoreSimulator/Devices/5F0C/data/Containers/Shared/AppGroup/1A2B/";
+        };
+        Path = "/Library/Developer/CoreSimulator/Volumes/iOS_23A343/Applications/Preferences.app";
+        SBAppTags =         (
+        );
+    };
+    "com.nesine.new-bet-dev" =     {
+        ApplicationType = User;
+        Bundle = "file:///Users/dev/Library/Developer/CoreSimulator/Devices/5F0C/data/Containers/Bundle/Application/9F1E/NewBet.app/";
+        CFBundleDisplayName = "Nesine Dev";
+        CFBundleExecutable = NewBet;
+        CFBundleIdentifier = "com.nesine.new-bet-dev";
+        CFBundleName = NewBet;
+        CFBundleVersion = 4211;
+        DataContainer = "file:///Users/dev/Library/Developer/CoreSimulator/Devices/5F0C/data/Containers/Data/Application/77AA/";
+        Path = "/Users/dev/Library/Developer/CoreSimulator/Devices/5F0C/data/Containers/Bundle/Application/9F1E/NewBet.app";
+        SBAppTags =         (
+            "hidden-from-launcher", "x"
+        );
+    };
+    "com.facebook.WebDriverAgentRunner.xctrunner" =     {
+        ApplicationType = User;
+        CFBundleDisplayName = "WebDriverAgentRunner-Runner";
+        CFBundleIdentifier = "com.facebook.WebDriverAgentRunner.xctrunner";
+        CFBundleName = "WebDriverAgentRunner-Runner";
+        Path = "/Users/dev/WDA.app";
+    };
+}
